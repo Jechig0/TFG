@@ -10,9 +10,9 @@ export class AlumnosService {
 
   private http = inject(HttpClient)
 
-  enviarCodigoAlumno(codigo: string) {
-    console.log({codigo},)
-    return this.http.post(this.apiUrl, { codigo_alumno: codigo });
+  getAlumnoById(id: string) {
+    console.log('Acceso a API')
+    return this.http.get(`${this.apiUrl}/alumno/${id}`);
   }
   
 }

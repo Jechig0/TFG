@@ -1,5 +1,5 @@
-import { AlumnosService } from '@/alumnos/services/alumnos.service';
 import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'text-input',
@@ -8,18 +8,13 @@ import { Component, inject } from '@angular/core';
 })
 export class TextInputComponent { 
 
-  resultado:any
+  router = inject(Router)
 
-  alumnosService = inject(AlumnosService)
   alumno = "0208F18506E41D3F29A4CAAD842FD0FA"
-  consultarAlumno() {
-    this.alumnosService.enviarCodigoAlumno(this.alumno).subscribe({
-      next: (res) => {
-        this.resultado = res;
-      },
-      error: (err) => {
-        console.error(err);
-      }
-    });
+
+  goToAlumno() {
+    this.router.navigate([`/alumno/${this.alumno}`])
   }
+      
+
 }
