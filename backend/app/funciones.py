@@ -4,36 +4,30 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-# Crear el DSN usando la IP remota
-dsn = oracledb.makedsn("afrodita.lcc.uma.es", 1521, sid="APOLO")
+def calcular_media_ponderada(cur:oracledb.Cursor, codigo_alumno:str, curso_max:str):
+    #Consulta para devolver la media hasta cierto año (esto es útil para integrarlo con siguientes funciones)
+    cur.execute("""
+        SELECT 
+            AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
+            COUNT(*) AS asignaturas_aprobadas
+        FROM v_calificaciones
+        WHERE CODIGOALUM = :codigo
+        AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
+        AND TO_NUMBER(SUBSTR(CURSOACADÉMICO, 1, 4)) < TO_NUMBER(SUBSTR(:curso_inicio , 1, 4))
+    """, codigo=codigo_alumno, curso_inicio=curso_max[:4])
 
-# Conectarse
-conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
+    resultado = cur.fetchone() #Como esperamos solo un resultado, uso fetchone
+    media, aprobadas = resultado
 
-def calcular_media_ponderada(codigo_alumno, curso_max):
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT 
-                AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
-                COUNT(*) AS asignaturas_aprobadas
-            FROM v_calificaciones
-            WHERE CODIGOALUM = :codigo
-            AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
-            AND TO_NUMBER(SUBSTR(CURSOACADÉMICO, 1, 4)) < TO_NUMBER(SUBSTR(:curso_inicio , 1, 4))
-        """, codigo=codigo_alumno, curso_inicio=curso_max[:4])
+    #Si la media devuelve None o todas las asignaturas de la base de datos están suspensas, devuelve None
+    if media is None or aprobadas == 0:
+        return None  # Evitamos división por cero o falta de datos
 
-        resultado = cur.fetchone() #Como esperamos solo un resultado, uso fetchone
-        media, aprobadas = resultado
-
-        if media is None or aprobadas == 0:
-            return None  # Evitamos división por cero o falta de datos
-
-        # Fórmula: (media * aprobadas * 6) / 240. NOTA: Supongo que todas las asignaturas valen 6 créditos ya que no tenemos información de cada una
-        ponderada = (media * aprobadas * 6) / 240
-        return round(ponderada, 2)
+    # Fórmula: (media * aprobadas * 6) / 240. NOTA: Supongo que todas las asignaturas valen 6 créditos ya que no tenemos información de cada una
+    ponderada = (media * aprobadas * 6) / 240
+    return round(ponderada, 2)
     
-def obtener_alumnos_matriculados(nombre_asignatura):
-    with conn.cursor() as cur:
+def obtener_alumnos_matriculados(cur, nombre_asignatura):
         cur.execute("""
             SELECT DISTINCT CODIGOALUM, CURSOACADÉMICO
             FROM v_calificaciones

@@ -12,5 +12,10 @@ export const routes: Routes = [
     {
         path:'alumno/:id',
         component: AlumnoPageComponent
+    },
+
+    {
+        path:'**',
+        redirectTo: ''
     }
 ];

@@ -10,10 +10,8 @@ export class TextInputComponent {
 
   router = inject(Router)
 
-  alumno = "0208F18506E41D3F29A4CAAD842FD0FA"
-
-  goToAlumno() {
-    this.router.navigate([`/alumno/${this.alumno}`])
+  goToAlumno(id: string) {
+    this.router.navigate([`/alumno/${id}`])
   }
       
 

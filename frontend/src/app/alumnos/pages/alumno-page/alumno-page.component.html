@@ -1,9 +1,22 @@
-<h1>alumno_page works!</h1>
-
 @if (alumnoResource.isLoading()){
     <div class="flex justify-center items-center h-screen">
         <span class="loading loading-spinner loading-lg"></span>
     </div>
 }
 
-{{alumnoResource.value()}}
+@if (alumnoResource.error()) {
+    <h1 class="text text-red-600 text-2xl">No se ha encontrado al alumno</h1>
+}
+@else {
+<h2 class="text-xl text-center">Bienvenido: <span class="font-bold">{{alumnoId}}</span></h2>
+    <div class="divider divider-neutral"></div>
+
+<button class="btn btn-info" (click)="mostrarTabla.set(!mostrarTabla())">
+    {{ mostrarTabla() ? 'Ocultar notas' : 'Ver notas' }}
+</button>
+<div class="grid grid-cols-2 gap-3 w-full h-full">
+    @if (alumnoResource.hasValue() && mostrarTabla()) {
+        <tabla-notas [alumnos]="alumnoResource.value()" [mediaAlumno]="mediaAlumno() ?? '0.0'"/>
+    }
+</div>
+}

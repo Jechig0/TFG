@@ -9,8 +9,8 @@
       <div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
         <div class="card-body">
           <fieldset class="fieldset">
-            <input class="input" placeholder="Número de expediente" />
-            <button (click)="goToAlumno()" class="btn btn-neutral mt-4">Login</button>
+            <input class="string" placeholder="Número de expediente" #txtSearch (keydown.enter)="goToAlumno(txtSearch.value)"/>
+            <button (click)="goToAlumno(txtSearch.value)" class="btn btn-neutral mt-4">Buscar</button>
           </fieldset>
         </div>
       </div>
