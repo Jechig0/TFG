@@ -15,8 +15,13 @@
     {{ mostrarTabla() ? 'Ocultar notas' : 'Ver notas' }}
 </button>
 <div class="grid grid-cols-2 gap-3 w-full h-full">
-    @if (alumnoResource.hasValue() && mostrarTabla()) {
-        <tabla-notas [alumnos]="alumnoResource.value()" [mediaAlumno]="mediaAlumno() ?? '0.0'"/>
+    <div>
+        @if (alumnoResource.hasValue() && mostrarTabla()) {
+            <tabla-notas [alumnos]="alumnoResource.value()" [mediaAlumno]="mediaAlumno() ?? '0.0'"/>
     }
+    </div>
+    <div>
+        <lista-asignaturas />
+    </div>
 </div>
 }

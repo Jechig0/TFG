@@ -3,10 +3,11 @@ import {Component, inject, signal } from '@angular/core';
 import {rxResource, toSignal} from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { TablaNotasComponent } from "../../components/tabla-notas/tabla-notas.component";
+import { ListaAsignaturasComponent } from "../../components/lista-asignaturas/lista-asignaturas.component";
 
 @Component({
   selector: 'app-alumno-page',
-  imports: [ TablaNotasComponent],
+  imports: [TablaNotasComponent, ListaAsignaturasComponent],
   templateUrl: './alumno-page.component.html',
 })
 export class AlumnoPageComponent { 
@@ -25,11 +26,5 @@ export class AlumnoPageComponent {
   })
 
   mediaAlumno = toSignal(this.alumnosService.getMediaAlumno(this.alumnoId))
-
-  asignaturaResource = rxResource({
-    loader: () => {
-      return this.alumnosService.getAsignaturas()
-    }
-  })
 
 }

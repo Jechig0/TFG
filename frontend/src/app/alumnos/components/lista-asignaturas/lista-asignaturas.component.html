@@ -1,0 +1,16 @@
+<input
+  type="text"
+  [formControl]="asignaturaControl"
+  placeholder="Buscar asignatura"
+  (focus)="mostrarLista = true"
+  (blur)="ocultarConRetraso()"
+  class="input"
+/>
+
+<ul *ngIf="mostrarLista" class="lista">
+  @for (asig of opcionesFiltradas; track as i) {
+    <li (click)="seleccionarAsignatura(asig)" class="opcion">
+      {{ asig }}
+    </li>
+  }
+</ul>

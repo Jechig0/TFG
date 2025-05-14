@@ -13,6 +13,7 @@ def calcular_media_ponderada(cur:oracledb.Cursor, codigo_alumno:str, curso_max:s
         FROM v_calificaciones
         WHERE CODIGOALUM = :codigo
         AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
+        AND nombreasignatura IS NOT NULL
         AND TO_NUMBER(SUBSTR(CURSOACADÉMICO, 1, 4)) < TO_NUMBER(SUBSTR(:curso_inicio , 1, 4))
     """, codigo=codigo_alumno, curso_inicio=curso_max[:4])
 

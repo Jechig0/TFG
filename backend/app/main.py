@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from funciones import calcular_media_ponderada
@@ -41,7 +41,9 @@ def get_alumno_by_id(id:str):
                 SELECT nombreasignatura, num_calificación
                 FROM v_calificaciones
                 WHERE codigoalum = :codigo
-                """, codigo = id)
+                AND nombreasignatura IS NOT NULL
+                AND num_calificación IS NOT NULL 
+                """, codigo = id) #Se evitan los valores nulos
     resultado = cur.fetchall()
     conn.close()
     
@@ -66,7 +68,8 @@ def get_media(id:str):
 def get_asignatura():
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
     cur = conn.cursor()
-    cur.execute("select distinct nombreasignatura from v_calificaciones")
+    #Al hacer la consulta en sql, hay una asignatura null. La quito de los resultados
+    cur.execute("SELECT distinct nombreasignatura FROM v_calificaciones WHERE nombreasignatura IS NOT NULL")
     asignaturas = cur.fetchall()
     conn.close()
     if not asignaturas:
