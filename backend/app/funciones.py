@@ -4,29 +4,27 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-def calcular_media_ponderada(cur:oracledb.Cursor, codigo_alumno:str, curso_max:str):
-    #Consulta para devolver la media hasta cierto año (esto es útil para integrarlo con siguientes funciones)
-    cur.execute("""
-        SELECT 
-            AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
-            COUNT(*) AS asignaturas_aprobadas
-        FROM v_calificaciones
-        WHERE CODIGOALUM = :codigo
-        AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
-        AND nombreasignatura IS NOT NULL
-        AND TO_NUMBER(SUBSTR(CURSOACADÉMICO, 1, 4)) < TO_NUMBER(SUBSTR(:curso_inicio , 1, 4))
-    """, codigo=codigo_alumno, curso_inicio=curso_max[:4])
+def calcular_media_ponderada(conn, codigo_alumno, curso_max):
+    with conn.cursor() as cur: 
+        cur.execute("""
+            SELECT 
+                AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
+                COUNT(*) AS asignaturas_aprobadas
+            FROM v_calificaciones
+            WHERE CODIGOALUM = :codigo
+            AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
+            AND TO_NUMBER(SUBSTR(CURSOACADÉMICO, 1, 4)) < TO_NUMBER(SUBSTR(:curso_inicio , 1, 4))
+        """, codigo=codigo_alumno, curso_inicio=curso_max[:4])
 
-    resultado = cur.fetchone() #Como esperamos solo un resultado, uso fetchone
-    media, aprobadas = resultado
+        resultado = cur.fetchone() #Como esperamos solo un resultado, uso fetchone
+        media, aprobadas = resultado
 
-    #Si la media devuelve None o todas las asignaturas de la base de datos están suspensas, devuelve None
-    if media is None or aprobadas == 0:
-        return None  # Evitamos división por cero o falta de datos
+        if media is None or aprobadas == 0:
+            return (None, 0)  # Evitamos división por cero o falta de datos
 
-    # Fórmula: (media * aprobadas * 6) / 240. NOTA: Supongo que todas las asignaturas valen 6 créditos ya que no tenemos información de cada una
-    ponderada = (media * aprobadas * 6) / 240
-    return round(ponderada, 2)
+        # Fórmula: (media * aprobadas * 6) / 240. NOTA: Supongo que todas las asignaturas valen 6 créditos ya que no tenemos información de cada una
+        ponderada = (media * aprobadas * 6) / 240
+        return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
     
 def obtener_alumnos_matriculados(cur, nombre_asignatura):
         cur.execute("""
@@ -47,20 +45,21 @@ def calcular_nota_corte(conn, nombre_asignatura):
         cursos.setdefault(curso_acad, []).append(codigo_alum)
 
     # 3. Para cada curso, calcular la nota de corte
-    nota_corte_por_anio = {}
+    nota_corte_por_año = {}
 
     for curso_acad, codigos_alumnos in cursos.items():
         medias = []
         for codigo_alum in codigos_alumnos:
-            media = calcular_media_ponderada(conn, codigo_alum, curso_acad)
-            if media is not None:
-                #print(media, ',', curso_acad) #Para ver las medias ponderadas con el año al que pertenecen
-                medias.append(media)
-        
+            resultado = calcular_media_ponderada(conn, codigo_alum, curso_acad)
+            if resultado:
+                media, aprobadas = resultado
+                if media is not None and aprobadas > 10:
+                    print(media, ',', codigo_alum)
+                    medias.append(media)
         if medias:
-            nota_corte_por_anio[curso_acad] = min(medias)
+            nota_corte_por_año[curso_acad] = min(medias)
 
-    return nota_corte_por_anio  # Dict: { "2018-19": 6.25, "2019-20": 5.8, ... }
+    return nota_corte_por_año  # Dict: { "2018-19": 6.25, "2019-20": 5.8, ... }
 
 def calcular_probabilidad_entrada(conn, nombre_asignatura, codigo_alumno):
     # Obtener las notas de corte por año
@@ -73,7 +72,7 @@ def calcular_probabilidad_entrada(conn, nombre_asignatura, codigo_alumno):
     total = 0
     supera = 0
 
-    media_alumno = calcular_media_ponderada(conn, codigo_alumno, '2022-23')
+    media_alumno, aprobadas = calcular_media_ponderada(conn, codigo_alumno, '2022-23')
     print(media_alumno)
     #media_alumno = 0.15
     for curso_acad, nota_corte in notas_corte.items():
