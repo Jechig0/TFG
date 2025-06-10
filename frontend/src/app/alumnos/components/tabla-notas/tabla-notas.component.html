@@ -9,7 +9,7 @@
     </thead>
     <tbody>
         @for (fila of alumnos(); track $index; let i = $index) {
-      <tr [ngClass]="{'bg-green-200':+fila[1] >= 5, 'bg-red-200': +fila[1] < 5}">
+      <tr [ngClass]="{'bg-green-400':+fila[1] >= 5, 'bg-red-400': +fila[1] < 5}">
         <td>{{i + 1}}</td>
         <td>{{fila[0]}}</td>
         <td>{{fila[1]}}</td>

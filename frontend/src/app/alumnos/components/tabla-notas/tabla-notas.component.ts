@@ -1,5 +1,5 @@
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
-import { NgClass } from '@angular/common';
+import { NgClass, PercentPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';

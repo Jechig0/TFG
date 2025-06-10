@@ -4,27 +4,24 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-def calcular_media_ponderada(conn, codigo_alumno, curso_max):
-    with conn.cursor() as cur: 
-        cur.execute("""
-            SELECT 
-                AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
-                COUNT(*) AS asignaturas_aprobadas
-            FROM v_calificaciones
-            WHERE CODIGOALUM = :codigo
-            AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
-            AND TO_NUMBER(SUBSTR(CURSOACADÉMICO, 1, 4)) < TO_NUMBER(SUBSTR(:curso_inicio , 1, 4))
-        """, codigo=codigo_alumno, curso_inicio=curso_max[:4])
-
-        resultado = cur.fetchone() #Como esperamos solo un resultado, uso fetchone
-        media, aprobadas = resultado
-
-        if media is None or aprobadas == 0:
-            return (None, 0)  # Evitamos división por cero o falta de datos
-
-        # Fórmula: (media * aprobadas * 6) / 240. NOTA: Supongo que todas las asignaturas valen 6 créditos ya que no tenemos información de cada una
-        ponderada = (media * aprobadas * 6) / 240
-        return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
+def calcular_media_ponderada(cur, codigo_alumno, curso_max):
+    cur.execute("""
+        SELECT 
+            AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
+            COUNT(*) AS asignaturas_aprobadas,
+            SUM(CREDITOS) AS creditos_aprobados
+        FROM v_calificaciones
+        WHERE CODIGOALUM = :codigo
+        AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
+        AND TO_NUMBER(SUBSTR(CURSOACADÉMICO, 1, 4)) < TO_NUMBER(SUBSTR(:curso_inicio , 1, 4))
+    """, codigo=codigo_alumno, curso_inicio=curso_max[:4])
+    resultado = cur.fetchone() #Como esperamos solo un resultado, uso fetchone
+    media, aprobadas, creditos = resultado
+    if media is None or aprobadas == 0:
+        return (None, 0)  # Evitamos división por cero o falta de datos
+    # Fórmula: (media * aprobadas * 6) / 240. NOTA: Supongo que todas las asignaturas valen 6 créditos ya que no tenemos información de cada una
+    ponderada = (media * creditos) / 240
+    return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
     
 def obtener_alumnos_matriculados(cur, nombre_asignatura):
         cur.execute("""

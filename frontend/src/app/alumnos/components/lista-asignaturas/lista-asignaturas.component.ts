@@ -1,15 +1,22 @@
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
 import { Component, inject } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import {rxResource, toSignal} from '@angular/core/rxjs-interop';
+import { NgClass } from '@angular/common';
+import { FilterByTextPipe } from '@/alumnos/pipes/filter-by-text.pipe';
 
 @Component({
   selector: 'lista-asignaturas',
-  imports: [],
+  imports: [ReactiveFormsModule, FormsModule, FilterByTextPipe],
   templateUrl: './lista-asignaturas.component.html',
 })
-export class ListaAsignaturasComponent { 
+export class ListaAsignaturasComponent {
   
+  fb = inject(FormBuilder)
   alumnosService = inject(AlumnosService)
+
+  searchText: string = '';
+
 
   asignaturaResource = rxResource({
     loader: () => {
@@ -17,36 +24,11 @@ export class ListaAsignaturasComponent {
     }
   })
 
-  datos: string[][] = [
-    ["Matemáticas", "5"], ["Física", "6"], ["Matemáticas", "7"], ["Historia", "3"]
-  ];
-  asignaturas: string[] = [];
-  opcionesFiltradas: string[] = [];
-  asignaturaControl = new FormControl('');
-  mostrarLista = false;
+  asignaturaForm = this.fb.group({
+    asignatura: ['', [Validators.required]]
+  })
 
-  ngOnInit() {
-    this.asignaturas = Array.from(new Set(this.datos.map(d => d[0]))); // únicos
-    this.asignaturaControl.valueChanges.subscribe(valor => {
-      this.opcionesFiltradas = this.filtrarAsignaturas(valor || '');
-    });
-  }
-
-  filtrarAsignaturas(valor: string): string[] {
-    const filtro = valor.toLowerCase();
-    return this.asignaturas.filter(asig => asig.toLowerCase().includes(filtro));
-  }
-
-  seleccionarAsignatura(asignatura: string) {
-    console.log('Seleccionaste:', asignatura);
-    this.mostrarLista = false;
-    this.asignaturaControl.setValue(asignatura);
-    // Aquí puedes ejecutar la lógica deseada con la asignatura
-  }
-
-  ocultarConRetraso() {
-    setTimeout(() => this.mostrarLista = false, 200); // Permite hacer click antes de ocultar
-  }
-
-
+  onSubmit() {
+    throw new Error('Method not implemented.');
+  } 
 }

@@ -49,7 +49,7 @@ def get_alumno_by_id(id:str):
     
     #Si no se encuentra el alumno, se devuelve error
     if not resultado:
-        raise HTTPException(status_code=404, detail=f"No se encontró información para el alumno con código {id}")
+        raise HTTPException(status_code=400, detail=f"No se encontró información para el alumno con código {id}")
     
     return JSONResponse(status_code=200, content=jsonable_encoder(resultado))
 
@@ -60,7 +60,7 @@ def get_media(id:str):
     media = calcular_media_ponderada(cur, id, "2024-25")
     conn.close()
     if media is None:
-        raise HTTPException(status_code=404, detail=f'No se ha podido calcular la media de {id}')
+        raise HTTPException(status_code=400, detail=f'No se ha podido calcular la media de {id}')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(media))
 
