@@ -1,21 +1,25 @@
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
-import { Component, inject } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import {rxResource, toSignal} from '@angular/core/rxjs-interop';
-import { NgClass } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, FormsModule, Validators } from '@angular/forms';
+import {rxResource} from '@angular/core/rxjs-interop';
 import { FilterByTextPipe } from '@/alumnos/pipes/filter-by-text.pipe';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'lista-asignaturas',
-  imports: [ReactiveFormsModule, FormsModule, FilterByTextPipe],
+  imports: [ FormsModule, FilterByTextPipe],
   templateUrl: './lista-asignaturas.component.html',
 })
 export class ListaAsignaturasComponent {
   
   fb = inject(FormBuilder)
   alumnosService = inject(AlumnosService)
+  activatedRoute = inject(ActivatedRoute)
 
-  searchText: string = '';
+  alumnoId = this.activatedRoute.snapshot.params['id']
+
+  searchText = signal<string>('')
+  selectedAsignatura = signal<string| null>(null)
 
 
   asignaturaResource = rxResource({
@@ -28,7 +32,10 @@ export class ListaAsignaturasComponent {
     asignatura: ['', [Validators.required]]
   })
 
-  onSubmit() {
-    throw new Error('Method not implemented.');
-  } 
+  onAsignaturaClick(asignatura: string) {
+    this.selectedAsignatura.set(asignatura)
+    this.searchText.set(asignatura)
+    this.alumnosService.getProbabilidadAcceso(this.alumnoId, asignatura)
+    this.alumnosService.getAfinidadAsignatura(this.alumnoId, asignatura)
+  }
 }

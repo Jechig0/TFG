@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from funciones import calcular_media_ponderada
+import funciones 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 
@@ -57,7 +57,7 @@ def get_alumno_by_id(id:str):
 def get_media(id:str):
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
     cur = conn.cursor()
-    media = calcular_media_ponderada(cur, id, "2024-25")
+    media, aprobadas = funciones.calcular_media_ponderada(cur, id, "2024-25")
     conn.close()
     if media is None:
         raise HTTPException(status_code=400, detail=f'No se ha podido calcular la media de {id}')
@@ -76,3 +76,23 @@ def get_asignatura():
         raise HTTPException(status_code=500, detail='No se han podido obtener las asignaturas')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))
+
+@app.get("/probabilidadEntrada/{alumnoId}/{asignatura}", tags=['Asignatura'])
+def get_probabilidad_acceso(id: str, asignatura: str):
+    conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
+    cur = conn.cursor()
+    funciones.calcular_probabilidad_entrada(cur, asignatura, id)
+    probabilidad = cur.fetchone()
+    conn.close()
+    return JSONResponse(status_code=200, content=jsonable_encoder(probabilidad))
+
+#TODO: El endpoint de arriba deberia funcionar, falta testearlo, el de abajo esta sin hacer
+
+@app.get("/afinidad/{alumnoId}/{asignatura}", tags=['Afinidad'])
+def get_afinidad(id: str, asignatura: str):
+    conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
+    cur = conn.cursor()
+    funciones.calcular_probabilidad_entrada(cur, asignatura, id)
+    probabilidad = cur.fetchone()
+    conn.close()
+    return JSONResponse(status_code=200, content=jsonable_encoder(probabilidad))

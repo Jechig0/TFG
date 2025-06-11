@@ -25,4 +25,11 @@ export class AlumnosService {
     return this.http.get<string[][]>(`${this.apiUrl}/asignaturas`);
   }
   
+  getProbabilidadAcceso(id:string, asignatura: string){
+
+  }
+
+  getAfinidadAsignatura(id:string, asignatura: string){
+    
+  }
 }

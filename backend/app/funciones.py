@@ -32,9 +32,9 @@ def obtener_alumnos_matriculados(cur, nombre_asignatura):
 
         return cur.fetchall()
 
-def calcular_nota_corte(conn, nombre_asignatura):
+def calcular_nota_corte(cur, nombre_asignatura):
     # 1. Obtener alumnos + curso académico donde cursaron esa asignatura
-    alumnos_con_curso = obtener_alumnos_matriculados(conn, nombre_asignatura)
+    alumnos_con_curso = obtener_alumnos_matriculados(cur, nombre_asignatura)
 
     # 2. Agrupar alumnos por curso académico
     cursos = {}
@@ -47,7 +47,7 @@ def calcular_nota_corte(conn, nombre_asignatura):
     for curso_acad, codigos_alumnos in cursos.items():
         medias = []
         for codigo_alum in codigos_alumnos:
-            resultado = calcular_media_ponderada(conn, codigo_alum, curso_acad)
+            resultado = calcular_media_ponderada(cur, codigo_alum, curso_acad)
             if resultado:
                 media, aprobadas = resultado
                 if media is not None and aprobadas > 10:
@@ -58,9 +58,9 @@ def calcular_nota_corte(conn, nombre_asignatura):
 
     return nota_corte_por_año  # Dict: { "2018-19": 6.25, "2019-20": 5.8, ... }
 
-def calcular_probabilidad_entrada(conn, nombre_asignatura, codigo_alumno):
+def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     # Obtener las notas de corte por año
-    notas_corte = calcular_nota_corte(conn, nombre_asignatura)
+    notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     print(notas_corte)
 
     if not notas_corte:
@@ -69,7 +69,7 @@ def calcular_probabilidad_entrada(conn, nombre_asignatura, codigo_alumno):
     total = 0
     supera = 0
 
-    media_alumno, aprobadas = calcular_media_ponderada(conn, codigo_alumno, '2022-23')
+    media_alumno, aprobadas = calcular_media_ponderada(cur, codigo_alumno, '2022-23')
     print(media_alumno)
     #media_alumno = 0.15
     for curso_acad, nota_corte in notas_corte.items():
@@ -84,3 +84,45 @@ def calcular_probabilidad_entrada(conn, nombre_asignatura, codigo_alumno):
 
     probabilidad = (supera / total) * 100
     return round(probabilidad, 2)
+
+# Suponemos que tienes un DataFrame con columnas: ['CODIGOALUM', 'NOMBREASIGNATURA', 'NUM_CALIFICACIÓN']
+df = pd.read_csv("data.csv")
+def entrenar_clustering(df, n_clusters=12):
+    # Crear matriz alumno-asignatura
+    matriz = df.pivot_table(index='CODIGOALUM', columns='NOMBREASIGNATURA', values='NUM_CALIFICACIÓN')
+    matriz = matriz.fillna(0)  #Para evitar valores NaN
+    
+    scaler = StandardScaler()
+    matriz_escalada = scaler.fit_transform(matriz)
+    
+    modelo = KMeans(n_clusters=n_clusters, random_state=42)
+    modelo.fit(matriz_escalada)
+    
+    # Añadir etiquetas de cluster
+    df_clusters = pd.DataFrame(matriz.index, columns=['CODIGOALUM'])
+    df_clusters['cluster'] = modelo.labels_
+    
+    return modelo, scaler, matriz, df_clusters
+
+def predecir_afinidad_cluster(alumno_id, asignatura, modelo, scaler, matriz, df_clusters, df_original):
+    if alumno_id not in matriz.index or asignatura not in matriz.columns:
+        return None
+    
+    alumno_vector = scaler.transform(matriz.loc[[alumno_id]])
+    cluster_id = modelo.predict(alumno_vector)[0]
+    
+    # Alumnos en ese cluster
+    alumnos_similares = df_clusters[df_clusters['cluster'] == cluster_id]['CODIGOALUM']
+    
+    # Notas en la asignatura de ese grupo
+    notas = df_original[
+        (df_original['CODIGOALUM'].isin(alumnos_similares)) &
+        (df_original['NOMBREASIGNATURA'] == asignatura) &
+        (df_original['NUM_CALIFICACIÓN'].notnull())
+    ]['NUM_CALIFICACIÓN'].astype(float)
+    
+    if notas.empty:
+        return 0.0
+    
+    return round(notas.mean() / 10, 3)
+
