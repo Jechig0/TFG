@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-def calcular_media_ponderada(cur, codigo_alumno, curso_max):
+def calcular_media_ponderada(cur: oracledb.Cursor, codigo_alumno, curso_max):
     cur.execute("""
         SELECT 
             AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
@@ -27,7 +27,7 @@ def obtener_alumnos_matriculados(cur, nombre_asignatura):
         cur.execute("""
             SELECT DISTINCT CODIGOALUM, CURSOACADÉMICO
             FROM v_calificaciones
-            WHERE NOMBREASIGNATURA = :asignatura
+            WHERE REPLACE(NOMBREASIGNATURA, ' ', '') = :asignatura
         """, asignatura=nombre_asignatura)
 
         return cur.fetchall()
@@ -51,7 +51,6 @@ def calcular_nota_corte(cur, nombre_asignatura):
             if resultado:
                 media, aprobadas = resultado
                 if media is not None and aprobadas > 10:
-                    print(media, ',', codigo_alum)
                     medias.append(media)
         if medias:
             nota_corte_por_año[curso_acad] = min(medias)
@@ -61,8 +60,6 @@ def calcular_nota_corte(cur, nombre_asignatura):
 def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
-    print(notas_corte)
-
     if not notas_corte:
         return 0.0  # No hay base para calcular probabilidad
 
@@ -70,7 +67,6 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     supera = 0
 
     media_alumno, aprobadas = calcular_media_ponderada(cur, codigo_alumno, '2022-23')
-    print(media_alumno)
     #media_alumno = 0.15
     for curso_acad, nota_corte in notas_corte.items():
         
@@ -85,10 +81,31 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     probabilidad = (supera / total) * 100
     return round(probabilidad, 2)
 
-# Suponemos que tienes un DataFrame con columnas: ['CODIGOALUM', 'NOMBREASIGNATURA', 'NUM_CALIFICACIÓN']
-df = pd.read_csv("data.csv")
-def entrenar_clustering(df, n_clusters=12):
+def crear_df(conn: oracledb.Connection):
+    sql = """SELECT CODIGOALUM, NOMBREASIGNATURA, NUM_CALIFICACIÓN
+FROM (
+    SELECT 
+        CODIGOALUM,
+        NOMBREASIGNATURA,
+        NUM_CALIFICACIÓN,
+        ROW_NUMBER() OVER (
+            PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
+            ORDER BY NUM_CALIFICACIÓN DESC
+        ) AS rn
+    FROM v_calificaciones
+    WHERE 
+        CODIGOALUM IS NOT NULL 
+        OR NOMBREASIGNATURA IS NOT NULL 
+        OR NUM_CALIFICACIÓN IS NOT NULL
+)
+WHERE rn = 1"""
+    
+    df = pd.read_sql(sql, conn)
+    return df
+    
+def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     # Crear matriz alumno-asignatura
+    df['NUM_CALIFICACIÓN'] = pd.to_numeric(df['NUM_CALIFICACIÓN'], errors='coerce')
     matriz = df.pivot_table(index='CODIGOALUM', columns='NOMBREASIGNATURA', values='NUM_CALIFICACIÓN')
     matriz = matriz.fillna(0)  #Para evitar valores NaN
     
@@ -104,7 +121,7 @@ def entrenar_clustering(df, n_clusters=12):
     
     return modelo, scaler, matriz, df_clusters
 
-def predecir_afinidad_cluster(alumno_id, asignatura, modelo, scaler, matriz, df_clusters, df_original):
+def predecir_afinidad_cluster(alumno_id:str, asignatura:str, modelo:KMeans, scaler:StandardScaler, matriz, df_clusters:pd.DataFrame, df_original:pd.DataFrame):
     if alumno_id not in matriz.index or asignatura not in matriz.columns:
         return None
     

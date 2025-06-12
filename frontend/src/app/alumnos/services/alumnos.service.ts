@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@environments/environment';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -25,11 +25,14 @@ export class AlumnosService {
     return this.http.get<string[][]>(`${this.apiUrl}/asignaturas`);
   }
   
-  getProbabilidadAcceso(id:string, asignatura: string){
-
+  getProbabilidadAcceso(id:string, asignatura: string): Observable<number>{
+    asignatura = asignatura.replace(/\s+/g, '')
+    console.log('Endpoint Probabilidad llamado')
+    const url = `${this.apiUrl}/probabilidadEntrada/${id}/${asignatura}`
+    console.log(url)
+    return this.http.get<number>(`${this.apiUrl}/probabilidadEntrada/${id}/${asignatura}`)
   }
 
-  getAfinidadAsignatura(id:string, asignatura: string){
-    
-  }
+  getAfinidadAsignatura(id:string, asignatura: string): Observable<number>{
+    return this.http.get<number>(`${this.apiUrl}/afinidad/${id}/${asignatura}`)  }
 }

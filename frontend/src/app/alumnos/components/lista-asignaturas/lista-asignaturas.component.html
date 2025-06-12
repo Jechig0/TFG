@@ -32,4 +32,11 @@
   </ul>
       
 }
+@if (this.probabilidadEntrada != null) {
+  <h1>Probabilidad de entrada en {{this.selectedAsignatura()}}: {{this.probabilidadEntrada()}}</h1>
+}
+
+@if (this.afinidadAsignatura != null) {
+  <h1>Afinidad con {{this.selectedAsignatura()}}: {{this.afinidadAsignatura() | percent:'1.2-2'}}</h1>
+}
 </div>
