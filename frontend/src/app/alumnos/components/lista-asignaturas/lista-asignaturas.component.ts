@@ -21,8 +21,8 @@ export class ListaAsignaturasComponent {
 
   searchText = signal<string>('')
   selectedAsignatura = signal<string| null>(null)
-  probabilidadEntrada = signal<number | null> (null)
-  afinidadAsignatura = signal<number| null> (null)
+  probabilidadAccesoSignal = signal<number | null> (null)
+  afinidadAsignaturaSignal = signal<number| null> (null)
   buscando = computed<boolean>(() => this.searchText() == this.selectedAsignatura())
 
 
@@ -32,22 +32,25 @@ export class ListaAsignaturasComponent {
     }
   })
 
-  onAsignaturaClick(asignatura: string) {
+  async onAsignaturaClick(asignatura: string) {
     this.selectedAsignatura.set(asignatura)
     this.searchText.set(asignatura)
+    await this.probabilidadAcceso(asignatura)
+    await this.afinidadAsignatura(asignatura)
+  }
+
+  async probabilidadAcceso(asignatura: string){
+    this.probabilidadAccesoSignal.set(null)
     this.alumnosService.getProbabilidadAcceso(this.alumnoId, asignatura).subscribe({
-      next: (res) => this.probabilidadEntrada.set(res)
-    })
-    this.alumnosService.getAfinidadAsignatura(this.alumnoId, asignatura).subscribe({
-      next: (afinidad) => this.afinidadAsignatura.set(afinidad)
+      next: (probabilidad) => this.probabilidadAccesoSignal.set(probabilidad)
     })
   }
 
-  controlarBusqueda(){
-    if(!this.buscando()){
-      this.probabilidadEntrada.set(null)
-      this.afinidadAsignatura.set(null)
-    }
+  async afinidadAsignatura(asignatura:string){
+    this.afinidadAsignaturaSignal.set(null)
+    this.alumnosService.getAfinidadAsignatura(this.alumnoId, asignatura).subscribe({
+      next: (afinidad) => this.afinidadAsignaturaSignal.set(afinidad)
+    })
   }
 
 }

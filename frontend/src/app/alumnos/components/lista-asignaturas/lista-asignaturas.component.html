@@ -32,11 +32,11 @@
   </ul>
       
 }
-@if (this.probabilidadEntrada != null) {
-  <h1>Probabilidad de entrada en {{this.selectedAsignatura()}}: {{this.probabilidadEntrada()}}</h1>
+@if (this.probabilidadAccesoSignal() != null) {
+  <h1>Probabilidad de entrada en {{this.selectedAsignatura()}}: {{this.probabilidadAccesoSignal()}}</h1>
 }
 
-@if (this.afinidadAsignatura != null) {
-  <h1>Afinidad con {{this.selectedAsignatura()}}: {{this.afinidadAsignatura() | percent:'1.2-2'}}</h1>
+@if (this.afinidadAsignaturaSignal() != null) {
+  <h1>Afinidad con {{this.selectedAsignatura()}}: {{this.afinidadAsignaturaSignal() | percent:'1.2-2'}}</h1>
 }
 </div>
