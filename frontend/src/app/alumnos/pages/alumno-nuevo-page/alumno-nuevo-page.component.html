@@ -1,1 +1,47 @@
-<p>alumno-nuevo-page works!</p>,
+<div class="grid grid-cols-2 gap-3 w-full h-full">
+    <div>
+          <div class="flex flex-col sm:flex-row gap-2">
+    <input
+      type="text"
+      placeholder="Asignatura"
+      [(ngModel)]="nuevaAsignatura"
+      class="input input-bordered w-full max-w-xs"
+    />
+    <input
+      type="number"
+      placeholder="Nota"
+      [(ngModel)]="nuevaNota"
+      class="input input-bordered w-full max-w-xs"
+    />
+    <button (click)="agregarFila()" class="btn btn-primary">Agregar</button>
+  </div>
+
+  <!-- Tabla -->
+  <div class="overflow-x-auto">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Asignatura</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (fila of alumnos(); track $index; let i = $index) {
+        <tr [ngClass]="{'bg-green-400':+fila[1] >= 5, 'bg-red-400': +fila[1] < 5}">
+            <td>{{ i + 1 }}</td>
+            <td>{{ fila[0] }}</td>
+            <td>{{ fila[1] }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Media -->
+  <h2 class="text-xl font-bold">Media ponderada: {{ mediaAlumno() }}</h2>
+    </div>
+    <div>
+        <lista-asignaturas />
+    </div>
+</div>
