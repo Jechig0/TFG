@@ -1,17 +1,20 @@
 import { Routes } from '@angular/router';
-import { MainPageComponent } from '@alumnos/pages/main-page/main-page.component';
-import { AlumnoPageComponent } from './alumnos/pages/alumno-page/alumno-page.component';
 
 export const routes: Routes = [
 
     {
         path: '',
-        component: MainPageComponent
+        loadComponent: () => import('./alumnos/pages/main-page/main-page.component').then(m => m.MainPageComponent)
     },
 
     {
         path:'alumno/:id',
-        component: AlumnoPageComponent
+        loadComponent: () => import('./alumnos/pages/alumno-page/alumno-page.component').then(m => m.AlumnoPageComponent)
+    },
+
+    {
+        path:'nuevo-alumno',
+        loadComponent: () => import('./alumnos/pages/alumno-nuevo-page/alumno-nuevo-page.component').then(m => m.AlumnoNuevoPageComponent)
     },
 
     {

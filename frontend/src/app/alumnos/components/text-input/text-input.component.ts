@@ -6,13 +6,16 @@ import { Router } from '@angular/router';
   imports: [],
   templateUrl: './text-input.component.html',
 })
-export class TextInputComponent { 
+export class TextInputComponent {
 
   router = inject(Router)
 
   goToAlumno(id: string) {
     this.router.navigate([`/alumno/${id}`])
   }
-      
+  
+  goToInsert() {
+    this.router.navigate([`/nuevo-alumno`])
+  } 
 
 }
