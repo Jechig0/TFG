@@ -4,9 +4,10 @@
 
 FRONTEND
 -Trabajar creación manual de alumnos (notas manuales y leer desde PDF de matricula)
+-Añadir campo para introducir número de expediente de alumno para usarlo como código único en el backend.
 
 BACKEND
 -Seguir trabajando las funciones para extraer las tablas del PDF en el notebook
 
 OTROS
--Avanzar la memoria
+-Avanzar la memoria (muy prioritario, hablarle a Rafa si cuando empiece el teletrabajo no ha compartido el Overleaf)
