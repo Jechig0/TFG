@@ -5,6 +5,7 @@ import {rxResource} from '@angular/core/rxjs-interop';
 import { FilterByTextPipe } from '@/alumnos/pipes/filter-by-text.pipe';
 import { ActivatedRoute } from '@angular/router';
 import { PercentPipe } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'lista-asignaturas',
@@ -23,7 +24,7 @@ export class ListaAsignaturasComponent {
   selectedAsignatura = signal<string| null>(null)
   probabilidadAccesoSignal = signal<number | null> (null)
   afinidadAsignaturaSignal = signal<number| null> (null)
-  buscando = computed<boolean>(() => this.searchText() == this.selectedAsignatura())
+  isLoading= signal<boolean>(false)
 
 
   asignaturaResource = rxResource({
@@ -33,24 +34,34 @@ export class ListaAsignaturasComponent {
   })
 
   async onAsignaturaClick(asignatura: string) {
-    this.selectedAsignatura.set(asignatura)
-    this.searchText.set(asignatura)
-    await this.probabilidadAcceso(asignatura)
-    await this.afinidadAsignatura(asignatura)
+  this.selectedAsignatura.set(asignatura);
+  this.searchText.set(asignatura);
+
+  this.isLoading.set(true);
+
+  await Promise.all([
+    this.probabilidadAcceso(asignatura),
+    this.afinidadAsignatura(asignatura),
+  ]);
+
+  this.isLoading.set(false);
   }
 
-  async probabilidadAcceso(asignatura: string){
-    this.probabilidadAccesoSignal.set(null)
-    this.alumnosService.getProbabilidadAcceso(this.alumnoId, asignatura).subscribe({
-      next: (probabilidad) => this.probabilidadAccesoSignal.set(probabilidad)
-    })
-  }
+  async probabilidadAcceso(asignatura: string) {
+  this.probabilidadAccesoSignal.set(null);
+  const probabilidad = await firstValueFrom(
+    this.alumnosService.getProbabilidadAcceso(this.alumnoId, asignatura)
+  );
+  this.probabilidadAccesoSignal.set(probabilidad);
+}
+
 
   async afinidadAsignatura(asignatura:string){
     this.afinidadAsignaturaSignal.set(null)
-    this.alumnosService.getAfinidadAsignatura(this.alumnoId, asignatura).subscribe({
-      next: (afinidad) => this.afinidadAsignaturaSignal.set(afinidad)
-    })
+    const afinidad = await firstValueFrom(
+      this.alumnosService.getAfinidadAsignatura(this.alumnoId, asignatura)
+    );
+    this.afinidadAsignaturaSignal.set(afinidad)
   }
 
 }

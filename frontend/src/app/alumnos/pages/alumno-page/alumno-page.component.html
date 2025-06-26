@@ -6,6 +6,7 @@
 
 @if (alumnoResource.error()) {
     <h1 class="text text-red-600 text-2xl">No se ha encontrado al alumno</h1>
+    <button class="btn btn-primary text-a" (click)="goToInsert()">Introduce tus notas manualmente</button>
 }
 @else {
 <h2 class="text-xl text-center">Bienvenido, ID: <span class="font-bold">{{alumnoId}}</span></h2>
