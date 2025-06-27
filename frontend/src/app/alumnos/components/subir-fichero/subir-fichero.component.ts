@@ -1,6 +1,6 @@
 import { AsignaturaNota } from '@/alumnos/interfaces/pdfresponse.interface';
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
-import { Component, EventEmitter, inject, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'subir-fichero',

@@ -1,9 +1,10 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ListaAsignaturasComponent } from "../../components/lista-asignaturas/lista-asignaturas.component";
 import { FormsModule } from '@angular/forms';
 import { NgClass, NgFor } from '@angular/common';
 import { SubirFicheroComponent } from "../../components/subir-fichero/subir-fichero.component";
 import { AsignaturaNota } from '@/alumnos/interfaces/pdfresponse.interface';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'alumno-nuevo-page',
@@ -11,9 +12,14 @@ import { AsignaturaNota } from '@/alumnos/interfaces/pdfresponse.interface';
   templateUrl: './alumno-nuevo-page.component.html',
 })
 export class AlumnoNuevoPageComponent { 
+
+  activatedRoute = inject(ActivatedRoute)
+
+
   alumnos = signal<[string, number][]>([]);
   nuevaAsignatura = '';
   nuevaNota: number | null = null;
+  alumnoId = this.activatedRoute.snapshot.paramMap.get('id');
 
   agregarFila() {
     if (this.nuevaAsignatura.trim() && this.nuevaNota !== null) {
