@@ -1,11 +1,8 @@
+import os
+import tempfile
 import oracledb as oracledb
-import pandas as pd
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
 import funciones 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
@@ -113,3 +110,27 @@ def get_afinidad(alumnoId: str, asignatura: str):
     if (afinidad is None):
         return(JSONResponse(status_code=400, detail="No se ha encontrado al alumno"))
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
+
+@app.post("/alumno/subir-informe", tags=["Alumno"])
+async def procesar_pdf(file: UploadFile = File(...)):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
+        temp_pdf.write(await file.read())
+        temp_pdf_path = temp_pdf.name
+
+    tablas_finales = funciones.procesar_pdf(temp_pdf_path)
+
+
+    # Construir respuesta: nombre de asignatura + nota literal
+    resultado = []
+    for tabla in tablas_finales:
+        for fila in tabla:
+            if len(fila) >= 6:
+                resultado.append({
+                    "asignatura": fila[0],
+                    "nota": fila[4]
+                })
+
+    os.remove(temp_pdf_path)
+    if(resultado == []):
+        return JSONResponse(status_code=400, content={"detail": "No se encontraron asignaturas con notas en el PDF proporcionado."})
+    return JSONResponse(status_code=201, content=jsonable_encoder(resultado))

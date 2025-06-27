@@ -2,10 +2,12 @@ import { Component, computed, signal } from '@angular/core';
 import { ListaAsignaturasComponent } from "../../components/lista-asignaturas/lista-asignaturas.component";
 import { FormsModule } from '@angular/forms';
 import { NgClass, NgFor } from '@angular/common';
+import { SubirFicheroComponent } from "../../components/subir-fichero/subir-fichero.component";
+import { AsignaturaNota } from '@/alumnos/interfaces/pdfresponse.interface';
 
 @Component({
   selector: 'alumno-nuevo-page',
-  imports: [ListaAsignaturasComponent, FormsModule, NgClass],
+  imports: [ListaAsignaturasComponent, FormsModule, NgClass, SubirFicheroComponent],
   templateUrl: './alumno-nuevo-page.component.html',
 })
 export class AlumnoNuevoPageComponent { 
@@ -22,6 +24,11 @@ export class AlumnoNuevoPageComponent {
       this.nuevaAsignatura = '';
       this.nuevaNota = null;
     }
+  }
+
+  cargarDesdeBackend(datos: AsignaturaNota[]) {
+    const nuevos = datos.map(item => [item.asignatura, +item.nota] as [string, number]);
+    this.alumnos.set(nuevos);
   }
 
   mediaAlumno = computed(() => {

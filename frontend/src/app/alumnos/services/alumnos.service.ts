@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@environments/environment';
 import { Observable, tap } from 'rxjs';
+import { AsignaturaNota } from '../interfaces/pdfresponse.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -35,4 +36,8 @@ export class AlumnosService {
 
   getAfinidadAsignatura(id:string, asignatura: string): Observable<number>{
     return this.http.get<number>(`${this.apiUrl}/afinidad/${id}/${asignatura}`)  }
+
+  enviarInformePdf(file: FormData): Observable<AsignaturaNota[]> {
+    return this.http.post<AsignaturaNota[]>(`${this.apiUrl}/alumno/subir-informe`, file)
+  }
 }

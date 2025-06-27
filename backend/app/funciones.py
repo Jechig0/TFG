@@ -1,6 +1,7 @@
 # Añadimos todas las librerias necesarias
 import oracledb as oracledb
 import pandas as pd
+import pdfplumber
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
@@ -19,7 +20,6 @@ def calcular_media_ponderada(cur: oracledb.Cursor, codigo_alumno, curso_max):
     media, aprobadas, creditos = resultado
     if media is None or aprobadas == 0:
         return (None, 0)  # Evitamos división por cero o falta de datos
-    # Fórmula: (media * aprobadas * 6) / 240. NOTA: Supongo que todas las asignaturas valen 6 créditos ya que no tenemos información de cada una
     ponderada = (media * creditos) / 240
     return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
     
@@ -143,3 +143,86 @@ def predecir_afinidad_cluster(alumno_id:str, asignatura:str, modelo:KMeans, scal
     
     return round(notas.mean() / 10, 3)
 
+def extraer_tablas(pdf_path):
+    tables = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_num, page in enumerate(pdf.pages):
+            page.extract_text()
+            page_tables = page.extract_tables()
+            for table in page_tables:
+                if table:  # Evita tablas vacías
+                    tables.append(table)
+
+    return tables
+
+def rellenar_asignaturas(tabla, indice_columna=0):
+    "Reemplaza valores None o vacíos por el último valor no vacío encontrado en una columna."
+    ultima_asignatura = None
+    nueva_tabla = []
+
+    for fila in tabla:
+        fila_copia = fila.copy()
+        valor = fila_copia[indice_columna]
+
+        if valor and valor.strip():
+            ultima_asignatura = valor.strip()
+            nueva_tabla.append(fila_copia)
+        else:
+            # El valor es None o vacío → usar última asignatura
+            fila_copia[indice_columna] = ultima_asignatura
+            # Eliminar la fila anterior (misma asignatura)
+            if nueva_tabla and nueva_tabla[-1][indice_columna] == ultima_asignatura:
+                nueva_tabla.pop()
+            nueva_tabla.append(fila_copia)
+
+    return nueva_tabla
+
+def limpiar_tabla(tabla, frase_objetivo="DATOS RELATIVOS A LAS ACTIVIDADES FORMATIVAS REALIZADAS EN EL CENTRO:"):
+    tabla_limpia = []
+
+    # Paso 1: eliminar filas basura que solo tienen la frase y Nones
+    for fila in tabla:
+        if fila[0] == frase_objetivo and all(c in [None, '', ' '] for c in fila[1:]):
+            continue
+        tabla_limpia.append(fila)
+
+    if not tabla_limpia:
+        return []
+
+    # Paso 2: eliminar la primera columna si todas las filas empiezan con None
+    if all(fila[0] == None for fila in tabla_limpia):
+        tabla_limpia = [fila[1:] for fila in tabla_limpia]
+
+    # Paso 3: rellenar los Nones en la columna de asignaturas (columna 0)
+    return rellenar_asignaturas(tabla_limpia, indice_columna=0)
+
+def limpiar_tablas_finales(tablas):
+    tablas_limpias = []
+
+    for tabla in tablas:
+        # Saltar si la tabla tiene 3 columnas o menos, ya que no contienen notas numéricas, por lo que no nos sirven.
+        if len(tabla[0]) <= 3:
+            continue
+
+        # Eliminar filas con encabezado 'Denominación asignatura'
+        tabla_sin_encabezado = [fila for fila in tabla if fila[0] != 'Denominación asignatura']
+
+        # Saltar tablas vacías tras limpieza
+        if not tabla_sin_encabezado:
+            continue
+
+        tablas_limpias.append(tabla_sin_encabezado)
+
+    # Eliminar la última tabla si queda alguna
+    if tablas_limpias:
+        tablas_limpias = tablas_limpias[:-1]
+
+    return tablas_limpias
+
+def procesar_pdf(pdf_path):
+    tablas = extraer_tablas(pdf_path)
+    tablas_limpias = [limpiar_tabla(tabla) for tabla in tablas]
+    tablas_finales = limpiar_tablas_finales(tablas_limpias)
+    
+    return tablas_finales
