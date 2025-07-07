@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 import funciones 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
+import pandas as pd
 
 
 app = FastAPI(
@@ -24,6 +25,9 @@ app.add_middleware(
 
 #Dirección de la base de datos a la que se va a acceder en las peticiones
 dsn = oracledb.makedsn("afrodita.lcc.uma.es", 1521, sid="APOLO")
+conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
+df = funciones.crear_df(conn)
+
 
 @app.get("/", include_in_schema=False)
 def root():
@@ -101,8 +105,8 @@ def get_probabilidad_acceso(alumnoId: str, asignatura: str):
 @app.get("/afinidad/{alumnoId}/{asignatura}", tags=['Afinidad'])
 def get_afinidad(alumnoId: str, asignatura: str):
     print('Afinidad llamada...')
+    global df
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
-    df = funciones.crear_df(conn)
     modelo, scaler, matriz, df_clusters = funciones.entrenar_clustering(df)
     afinidad = funciones.predecir_afinidad_cluster(alumnoId, asignatura, modelo, scaler, matriz, df_clusters, df)
     conn.close()
@@ -111,13 +115,16 @@ def get_afinidad(alumnoId: str, asignatura: str):
         return(JSONResponse(status_code=400, detail="No se ha encontrado al alumno"))
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
 
-@app.post("/alumno/subir-informe", tags=["Alumno"])
-async def procesar_pdf(file: UploadFile = File(...)):
+@app.post("/alumno/{id}/subir-informe", tags=["Alumno"])
+async def procesar_pdf(id: str, file: UploadFile = File(...)):
+    global df
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
         temp_pdf.write(await file.read())
         temp_pdf_path = temp_pdf.name
 
     tablas_finales = funciones.procesar_pdf(temp_pdf_path)
+    df_alumno = funciones.convertir_pdf_a_df(tablas_finales, id)
+    df = pd.concat([df, df_alumno], ignore_index=True)
 
 
     # Construir respuesta: nombre de asignatura + nota literal

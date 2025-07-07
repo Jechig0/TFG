@@ -35,9 +35,10 @@ export class AlumnosService {
   }
 
   getAfinidadAsignatura(id:string, asignatura: string): Observable<number>{
-    return this.http.get<number>(`${this.apiUrl}/afinidad/${id}/${asignatura}`)  }
+    return this.http.get<number>(`${this.apiUrl}/afinidad/${id}/${asignatura}`)
+  }
 
-  enviarInformePdf(file: FormData): Observable<AsignaturaNota[]> {
-    return this.http.post<AsignaturaNota[]>(`${this.apiUrl}/alumno/subir-informe`, file)
+  enviarInformePdf(id:string ,file: FormData): Observable<AsignaturaNota[]> {
+    return this.http.post<AsignaturaNota[]>(`${this.apiUrl}/alumno/${id}/subir-informe`, file)
   }
 }

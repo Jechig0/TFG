@@ -1,6 +1,8 @@
 import { AsignaturaNota } from '@/alumnos/interfaces/pdfresponse.interface';
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
 
 @Component({
   selector: 'subir-fichero',
@@ -9,7 +11,11 @@ import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 })
 export class SubirFicheroComponent {
 
+  activatedRoute = inject(ActivatedRoute);
   alumnosService = inject(AlumnosService);
+
+  alumnoId = this.activatedRoute.snapshot.paramMap.get('id');
+
 
   @Output() datosExtraidos = new EventEmitter<AsignaturaNota[]>();
 
@@ -21,7 +27,7 @@ export class SubirFicheroComponent {
       const formData = new FormData();
       formData.append('file', file, file.name);
 
-      this.alumnosService.enviarInformePdf(formData).subscribe(
+      this.alumnosService.enviarInformePdf(this.alumnoId!, formData).subscribe(
         response => {
           console.log(response);
           this.datosExtraidos.emit(response)

@@ -224,5 +224,28 @@ def procesar_pdf(pdf_path):
     tablas = extraer_tablas(pdf_path)
     tablas_limpias = [limpiar_tabla(tabla) for tabla in tablas]
     tablas_finales = limpiar_tablas_finales(tablas_limpias)
+
     
     return tablas_finales
+
+def normalizar_asignatura(nombre: str) -> str:
+    return nombre.replace(" ", "").strip()
+
+def convertir_pdf_a_df(lista_tablas, codigo_alumno):
+    datos_limpios = []
+
+    for tabla in lista_tablas:
+        for fila in tabla:
+            asignatura = normalizar_asignatura(fila[0])
+            nota = fila[4]
+
+            if not asignatura or not nota:
+                continue
+
+            datos_limpios.append({
+                "CODIGOALUM": codigo_alumno,
+                "NOMBREASIGNATURA": asignatura,
+                "NUM_CALIFICACIÓN": nota
+            })
+
+    return pd.DataFrame(datos_limpios)
