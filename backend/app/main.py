@@ -27,6 +27,7 @@ app.add_middleware(
 dsn = oracledb.makedsn("afrodita.lcc.uma.es", 1521, sid="APOLO")
 conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
 df = funciones.crear_df(conn)
+pdf_info: list = []
 
 
 @app.get("/", include_in_schema=False)
@@ -93,19 +94,22 @@ def get_asignatura():
 @app.get("/probabilidadEntrada/{alumnoId}/{asignatura}", tags=['Asignatura'])
 def get_probabilidad_acceso(alumnoId: str, asignatura: str):
     print(f'Entrada al Enpoint con {asignatura}')
+    global df, pdf_info
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
     cur = conn.cursor()
-    probabilidad = funciones.calcular_probabilidad_entrada(cur, asignatura, alumnoId)
+    probabilidad = funciones.calcular_probabilidad_entrada(cur, asignatura, alumnoId, df, pdf_info)
     conn.close()
-    print('Función terminada')
     return JSONResponse(status_code=200, content=jsonable_encoder(probabilidad))
-
-#TODO: El endpoint de arriba deberia funcionar, falta testearlo, el de abajo esta sin hacer
 
 @app.get("/afinidad/{alumnoId}/{asignatura}", tags=['Afinidad'])
 def get_afinidad(alumnoId: str, asignatura: str):
     print('Afinidad llamada...')
     global df
+    df_filtrado = df[
+        (df["CODIGOALUM"] == alumnoId) &
+        (df["NUM_CALIFICACIÓN"].astype(float) >= 5)
+    ]
+    print(df_filtrado)
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
     modelo, scaler, matriz, df_clusters = funciones.entrenar_clustering(df)
     afinidad = funciones.predecir_afinidad_cluster(alumnoId, asignatura, modelo, scaler, matriz, df_clusters, df)
@@ -117,7 +121,7 @@ def get_afinidad(alumnoId: str, asignatura: str):
 
 @app.post("/alumno/{id}/subir-informe", tags=["Alumno"])
 async def procesar_pdf(id: str, file: UploadFile = File(...)):
-    global df
+    global df, pdf_info
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
         temp_pdf.write(await file.read())
         temp_pdf_path = temp_pdf.name
@@ -125,8 +129,7 @@ async def procesar_pdf(id: str, file: UploadFile = File(...)):
     tablas_finales = funciones.procesar_pdf(temp_pdf_path)
     df_alumno = funciones.convertir_pdf_a_df(tablas_finales, id)
     df = pd.concat([df, df_alumno], ignore_index=True)
-
-
+    pdf_info = tablas_finales
     # Construir respuesta: nombre de asignatura + nota literal
     resultado = []
     for tabla in tablas_finales:

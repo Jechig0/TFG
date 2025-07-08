@@ -57,7 +57,7 @@ def calcular_nota_corte(cur, nombre_asignatura):
 
     return nota_corte_por_año  # Dict: { "2018-19": 6.25, "2019-20": 5.8, ... }
 
-def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
+def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno, df, pdf_info):
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     if not notas_corte:
@@ -76,17 +76,17 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
                 supera += 1
 
     if total == 0:
-        return 0.0  # El alumno no tiene historial válido
+        return calcular_probabilidad_entrada_df(notas_corte, df, codigo_alumno, pdf_info)
 
     probabilidad = (supera / total) * 100
     return round(probabilidad, 2)
 
 def crear_df(conn: oracledb.Connection):
-    sql = """SELECT CODIGOALUM, NOMBREASIGNATURA, NUM_CALIFICACIÓN
+    sql = """SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
 FROM (
     SELECT 
         CODIGOALUM,
-        NOMBREASIGNATURA,
+        REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA,
         NUM_CALIFICACIÓN,
         ROW_NUMBER() OVER (
             PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
@@ -121,7 +121,7 @@ def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     
     return modelo, scaler, matriz, df_clusters
 
-def predecir_afinidad_cluster(alumno_id:str, asignatura:str, modelo:KMeans, scaler:StandardScaler, matriz, df_clusters:pd.DataFrame, df_original:pd.DataFrame):
+def predecir_afinidad_cluster(alumno_id:str, asignatura:str, modelo:KMeans, scaler:StandardScaler, matriz:pd.DataFrame, df_clusters:pd.DataFrame, df_original:pd.DataFrame):
     if alumno_id not in matriz.index or asignatura not in matriz.columns:
         return None
     
@@ -249,3 +249,92 @@ def convertir_pdf_a_df(lista_tablas, codigo_alumno):
             })
 
     return pd.DataFrame(datos_limpios)
+
+def calcular_media_ponderada_df(df: pd.DataFrame, tablas_pdf: list, codigo_alumno: str):
+    total_creditos = 0
+
+    for tabla in tablas_pdf:
+        for fila in tabla:
+            if len(fila) < 6:
+                continue
+
+            asignatura = fila[0]
+            creditos = fila[1]
+            curso = fila[2]
+            nota_str = fila[4]
+            calificacion_literal = fila[5]
+
+            # Validar datos necesarios
+            if not asignatura or not nota_str or not creditos or not curso or not calificacion_literal:
+                continue
+
+            # Validar calificación aprobada
+            calif_normalizada = calificacion_literal.strip().upper()
+            if calif_normalizada in ["SUSPENSO", "NO PRESENTADO"]:
+                continue
+            total_creditos = float(creditos) + total_creditos
+
+    # Filtrar registros del DF
+    df_filtrado = df[
+        (df["CODIGOALUM"] == codigo_alumno) &
+        (df["NUM_CALIFICACIÓN"].astype(float) >= 5)
+    ]
+        
+    try:
+        notas_df = df_filtrado["NUM_CALIFICACIÓN"].astype(float)
+        media_df = notas_df.mean()
+        aprobadas_df = len(df_filtrado)
+        
+    except Exception:
+        media_df = None
+        total_creditos = 0
+        aprobadas_df = 0
+        
+    # Agregar datos del PDF
+
+    ponderada = round((media_df) * (total_creditos / 240), 2)
+    return (ponderada, aprobadas_df)
+
+    
+def calcular_probabilidad_entrada_df(notas_corte: dict, df: pd.DataFrame ,codigo_alumno: str, datos_pdf: list):
+
+    media_alumno, aprobadas = calcular_media_ponderada_df(df, datos_pdf , codigo_alumno)
+    total = 0
+    supera = 0
+    #media_alumno = 0.15
+    for curso_acad, nota_corte in notas_corte.items():
+        
+        if media_alumno is not None:
+            total += 1
+            if media_alumno > nota_corte:
+                supera += 1
+
+    if total == 0:
+        return 0.0  # El alumno no tiene historial válido
+
+    probabilidad = (supera / total) * 100
+    return round(probabilidad, 2)
+
+# def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
+#     # Obtener las notas de corte por año
+#     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
+#     if not notas_corte:
+#         return 0.0  # No hay base para calcular probabilidad
+
+#     total = 0
+#     supera = 0
+
+#     media_alumno, aprobadas = calcular_media_ponderada(cur, codigo_alumno, '2022-23')
+#     #media_alumno = 0.15
+#     for curso_acad, nota_corte in notas_corte.items():
+#
+#         if media_alumno is not None:
+#             total += 1
+#             if media_alumno > nota_corte:
+#                 supera += 1
+
+#     if total == 0:
+#         return calcular_probabilidad_entrada_df(notas_corte)
+
+#     probabilidad = (supera / total) * 100
+#     return round(probabilidad, 2)

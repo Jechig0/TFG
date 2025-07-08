@@ -28,13 +28,11 @@ export class AlumnosService {
   
   getProbabilidadAcceso(id:string, asignatura: string): Observable<number>{
     asignatura = asignatura.replace(/\s+/g, '')
-    console.log('Endpoint Probabilidad llamado')
-    const url = `${this.apiUrl}/probabilidadEntrada/${id}/${asignatura}`
-    console.log(url)
     return this.http.get<number>(`${this.apiUrl}/probabilidadEntrada/${id}/${asignatura}`)
   }
 
   getAfinidadAsignatura(id:string, asignatura: string): Observable<number>{
+    asignatura = asignatura.replace(/\s+/g, '')
     return this.http.get<number>(`${this.apiUrl}/afinidad/${id}/${asignatura}`)
   }
 

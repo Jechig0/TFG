@@ -61,6 +61,7 @@ export class ListaAsignaturasComponent {
     const afinidad = await firstValueFrom(
       this.alumnosService.getAfinidadAsignatura(this.alumnoId, asignatura)
     );
+    console.log('afinidad', afinidad)
     this.afinidadAsignaturaSignal.set(afinidad)
   }
 
