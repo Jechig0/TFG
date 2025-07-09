@@ -2,12 +2,12 @@
 
 -Notas de las reuniones sobre el TFG para anotar los elementos prioritarios.
 
+GENERAL
+-Funcionalidades básicas funcionales en general, trabajar en control de errores, excepciones y posible persistencia de datos entre sesiones y problemas de concurrencia.
+-Añadir filtrado para las tablas de búsqueda de asignaturas para que solo muestren las que sean optativas
+-Avanzar la memoria
+
 FRONTEND
--Trabajar creación manual de alumnos (notas manuales y leer desde PDF de matricula)
--Añadir campo para introducir número de expediente de alumno para usarlo como código único en el backend.
+-Trabajar creación manual de alumnos (notas manuales)
 
 BACKEND
--Seguir trabajando las funciones para extraer las tablas del PDF en el notebook
-
-OTROS
--Avanzar la memoria (muy prioritario, hablarle a Rafa si cuando empiece el teletrabajo no ha compartido el Overleaf)

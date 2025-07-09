@@ -36,11 +36,4 @@ export class AlumnoNuevoPageComponent {
     const nuevos = datos.map(item => [item.asignatura, +item.nota] as [string, number]);
     this.alumnos.set(nuevos);
   }
-
-  mediaAlumno = computed(() => {
-    const lista = this.alumnos();
-    if (lista.length === 0) return 0;
-    const suma = lista.reduce((acc, [, nota]) => acc + nota, 0);
-    return (suma / lista.length).toFixed(2);
-  });
 }

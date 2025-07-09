@@ -10,7 +10,17 @@ export class EnviarNumeroExpedienteComponent {
 
   router = inject(Router);
 
+  error = '';  // Para mostrar mensaje de error
+
   goToNuevoAlumno(id: string) {
-    this.router.navigate([`/nuevo-alumno/${id}`])
+    const idLimpio = id.trim();
+
+    if (!/^\d{9}$/.test(idLimpio)) {
+      this.error = 'El código debe tener exactamente 9 dígitos numéricos.';
+      return;
+    }
+
+    this.error = '';
+    this.router.navigate([`/nuevo-alumno/${idLimpio}`]);
   }
 }

@@ -14,7 +14,6 @@ export class AlumnosService {
   private http = inject(HttpClient)
 
   getAlumnoById(id: string): Observable<string[][]> {
-    console.log('Acceso a API')
     return this.http.get<string[][]>(`${this.apiUrl}/alumno/${id}`);
   }
 

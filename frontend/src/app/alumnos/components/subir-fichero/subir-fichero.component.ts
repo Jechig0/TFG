@@ -20,20 +20,21 @@ export class SubirFicheroComponent {
   @Output() datosExtraidos = new EventEmitter<AsignaturaNota[]>();
 
  
-  onFileSelected(event: any) {
-    console.log(event)
-    const file: File = event.target.files[0];
-    if (file) {
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
       const formData = new FormData();
-      formData.append('file', file, file.name);
+      formData.append('file', file);
 
-      this.alumnosService.enviarInformePdf(this.alumnoId!, formData).subscribe(
-        response => {
-          console.log(response);
-          this.datosExtraidos.emit(response)
+      this.alumnosService.enviarInformePdf(this.alumnoId!, formData).subscribe({
+        next: (response) => {
+          this.datosExtraidos.emit(response);
         },
-        error => console.error(error)
-      );
+        error: (error) => {
+          console.error('Error al subir el fichero:', error);
+        }
+      });
     }
   }
 }

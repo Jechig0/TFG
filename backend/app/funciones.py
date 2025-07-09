@@ -82,11 +82,12 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno, df, pdf
     return round(probabilidad, 2)
 
 def crear_df(conn: oracledb.Connection):
-    sql = """SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
+    sql = """SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA,  NOMBREASIGNATURA AS NOMBRE_ORIGINAL, NUM_CALIFICACIÓN
 FROM (
     SELECT 
         CODIGOALUM,
         REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA,
+        NOMBREASIGNATURA AS NOMBRE_ORIGINAL,
         NUM_CALIFICACIÓN,
         ROW_NUMBER() OVER (
             PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
@@ -237,6 +238,7 @@ def convertir_pdf_a_df(lista_tablas, codigo_alumno):
     for tabla in lista_tablas:
         for fila in tabla:
             asignatura = normalizar_asignatura(fila[0])
+            asignatura_original = fila[0]  # Mantener el nombre original
             nota = fila[4]
 
             if not asignatura or not nota:
@@ -245,6 +247,7 @@ def convertir_pdf_a_df(lista_tablas, codigo_alumno):
             datos_limpios.append({
                 "CODIGOALUM": codigo_alumno,
                 "NOMBREASIGNATURA": asignatura,
+                "NOMBRE_ORIGINAL": asignatura_original,
                 "NUM_CALIFICACIÓN": nota
             })
 
@@ -314,27 +317,3 @@ def calcular_probabilidad_entrada_df(notas_corte: dict, df: pd.DataFrame ,codigo
 
     probabilidad = (supera / total) * 100
     return round(probabilidad, 2)
-
-# def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
-#     # Obtener las notas de corte por año
-#     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
-#     if not notas_corte:
-#         return 0.0  # No hay base para calcular probabilidad
-
-#     total = 0
-#     supera = 0
-
-#     media_alumno, aprobadas = calcular_media_ponderada(cur, codigo_alumno, '2022-23')
-#     #media_alumno = 0.15
-#     for curso_acad, nota_corte in notas_corte.items():
-#
-#         if media_alumno is not None:
-#             total += 1
-#             if media_alumno > nota_corte:
-#                 supera += 1
-
-#     if total == 0:
-#         return calcular_probabilidad_entrada_df(notas_corte)
-
-#     probabilidad = (supera / total) * 100
-#     return round(probabilidad, 2)

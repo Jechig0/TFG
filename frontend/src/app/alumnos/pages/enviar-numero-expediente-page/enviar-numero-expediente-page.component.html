@@ -1,5 +1,20 @@
-<input
+<div class="form-control w-full max-w-xs space-y-2 text-center items-center">
+  <input
     type="text"
     placeholder="Código del alumno"
     #txtSearch
-    (keydown.enter)="goToNuevoAlumno(txtSearch.value)"  class="input input-bordered w-full max-w-xs" />
+    (keydown.enter)="goToNuevoAlumno(txtSearch.value)"
+    class="input input-bordered input-primary w-full"
+  />
+
+  <button
+    class="btn btn-primary w-full"
+    (click)="goToNuevoAlumno(txtSearch.value)"
+  >
+    Acceder
+  </button>
+
+  @if (error) {
+    <p class="text-red-500 mt-1 text-sm">{{ error }}</p>
+  }
+</div>

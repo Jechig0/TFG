@@ -1,3 +1,4 @@
+import math
 import os
 import tempfile
 import oracledb as oracledb
@@ -26,6 +27,8 @@ app.add_middleware(
 #Dirección de la base de datos a la que se va a acceder en las peticiones
 dsn = oracledb.makedsn("afrodita.lcc.uma.es", 1521, sid="APOLO")
 conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
+
+# Variables globales
 df = funciones.crear_df(conn)
 pdf_info: list = []
 
@@ -36,6 +39,7 @@ def root():
 
 @app.get("/alumno/{id}", tags=["Alumno"])
 def get_alumno_by_id(id:str):
+    global df
     #Creo la conexión y el cursor, y ejecuto la consulta
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
     #La subconsulta, que se reutiliza en el codigo, agrupa todas las notas de la base de datos de los alumnos y las asignaturas, y devuelve solo la más alta
@@ -61,6 +65,10 @@ def get_alumno_by_id(id:str):
     resultado = cur.fetchall()
     conn.close()
     
+    if not resultado:
+        df_filtrado = df[df["CODIGOALUM"] == id]
+        resultado = df_filtrado[["NOMBRE_ORIGINAL", "NUM_CALIFICACIÓN"]].values.tolist()
+
     #Si no se encuentra el alumno, se devuelve error
     if not resultado:
         raise HTTPException(status_code=400, detail=f"No se encontró información para el alumno con código {id}")
@@ -69,11 +77,15 @@ def get_alumno_by_id(id:str):
 
 @app.get("/media/{id}", tags=["Alumno"])
 def get_media(id:str):
+    global df, pdf_info
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
     cur = conn.cursor()
-    media, aprobadas = funciones.calcular_media_ponderada(cur, id, "2024-25")
+    media = funciones.calcular_media_ponderada(cur, id, "2024-25")[0]
     conn.close()
     if media is None:
+        media = funciones.calcular_media_ponderada_df(df, pdf_info, id)[0]
+        print(f'Media calculada desde el DataFrame: {media}')
+    if media is None or math.isnan(media):
         raise HTTPException(status_code=400, detail=f'No se ha podido calcular la media de {id}')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(media))
@@ -103,24 +115,19 @@ def get_probabilidad_acceso(alumnoId: str, asignatura: str):
 
 @app.get("/afinidad/{alumnoId}/{asignatura}", tags=['Afinidad'])
 def get_afinidad(alumnoId: str, asignatura: str):
-    print('Afinidad llamada...')
     global df
-    df_filtrado = df[
-        (df["CODIGOALUM"] == alumnoId) &
-        (df["NUM_CALIFICACIÓN"].astype(float) >= 5)
-    ]
-    print(df_filtrado)
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
     modelo, scaler, matriz, df_clusters = funciones.entrenar_clustering(df)
     afinidad = funciones.predecir_afinidad_cluster(alumnoId, asignatura, modelo, scaler, matriz, df_clusters, df)
     conn.close()
-    print('Afinidad terminada')
     if (afinidad is None):
         return(JSONResponse(status_code=400, detail="No se ha encontrado al alumno"))
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
 
 @app.post("/alumno/{id}/subir-informe", tags=["Alumno"])
 async def procesar_pdf(id: str, file: UploadFile = File(...)):
+    if not file.filename.endswith('.pdf') and not file.filename.startswith('ListadoConsultaExpedienteAcademico'):
+        raise HTTPException(status_code=400, detail="El archivo no es un PDF válido.")
     global df, pdf_info
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
         temp_pdf.write(await file.read())
@@ -129,6 +136,7 @@ async def procesar_pdf(id: str, file: UploadFile = File(...)):
     tablas_finales = funciones.procesar_pdf(temp_pdf_path)
     df_alumno = funciones.convertir_pdf_a_df(tablas_finales, id)
     df = pd.concat([df, df_alumno], ignore_index=True)
+    df = df.drop_duplicates(subset=["CODIGOALUM", "NOMBREASIGNATURA"], keep="last").reset_index(drop=True)
     pdf_info = tablas_finales
     # Construir respuesta: nombre de asignatura + nota literal
     resultado = []
