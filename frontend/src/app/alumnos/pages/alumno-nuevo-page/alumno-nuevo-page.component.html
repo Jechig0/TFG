@@ -43,7 +43,15 @@
   <!-- Media -->
   <!-- <h2 class="text-xl font-bold">Media ponderada: {{ mediaAlumno() }}</h2> -->
     </div>
-    <div>
+
+    @if (alumnos().length === 0) {
+      <p>Introduzca sus notas antes de continuar.</p>
+    }
+
+    @else {
+      <div>
         <lista-asignaturas />
-    </div>
+      </div>
+    }
+
 </div>

@@ -9,5 +9,6 @@ GENERAL
 
 FRONTEND
 -Trabajar creación manual de alumnos (notas manuales)
+-Para alumno nuevo: si hay ya notas en el backend, que se muestren correctamente
 
 BACKEND

@@ -31,8 +31,8 @@ export class SubirFicheroComponent {
         next: (response) => {
           this.datosExtraidos.emit(response);
         },
-        error: (error) => {
-          console.error('Error al subir el fichero:', error);
+        error: () => {
+          alert('El fichero enviado no es un PDF válido o no se ha podido procesar.');
         }
       });
     }
