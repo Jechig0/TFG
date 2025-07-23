@@ -12,3 +12,12 @@ FRONTEND
 -Para alumno nuevo: si hay ya notas en el backend, que se muestren correctamente
 
 BACKEND
+
+REUNION
+-Filtrado por optativas y por titulación.
+-Protección de datos con últimos digitos del DNI.
+-Mensaje error: "No existen datos históricos de calificación de esta asignatura" para asignaturas recién ofertadas.
+-Boton borrado de datos.
+-Dashboard administrador.
+-Añadir base de datos.
+-Modificar estructura del backend (separar rutas del main para mejor comprensión).
