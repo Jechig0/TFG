@@ -157,46 +157,49 @@ def extraer_tablas(pdf_path):
 
     return tables
 
-def rellenar_asignaturas(tabla, indice_columna=0):
+def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
     "Reemplaza valores None o vacíos por el último valor no vacío encontrado en una columna."
-    ultima_asignatura = None
+    asignatura = ultima_asignatura
     nueva_tabla = []
 
     for fila in tabla:
         fila_copia = fila.copy()
         valor = fila_copia[indice_columna]
 
-        if valor and valor.strip():
-            ultima_asignatura = valor.strip()
+        if valor and valor.strip() and valor != "DATOS RELATIVOS A LAS ACTIVIDADES FORMATIVAS REALIZADAS EN EL CENTRO:":
+            asignatura = valor.strip()
             nueva_tabla.append(fila_copia)
         else:
             # El valor es None o vacío → usar última asignatura
-            fila_copia[indice_columna] = ultima_asignatura
+            
+            fila_copia[indice_columna] = asignatura
             # Eliminar la fila anterior (misma asignatura)
-            if nueva_tabla and nueva_tabla[-1][indice_columna] == ultima_asignatura:
+            if nueva_tabla and nueva_tabla[-1][indice_columna] == asignatura:
                 nueva_tabla.pop()
             nueva_tabla.append(fila_copia)
 
-    return nueva_tabla
+    return nueva_tabla, asignatura
 
-def limpiar_tabla(tabla, frase_objetivo="DATOS RELATIVOS A LAS ACTIVIDADES FORMATIVAS REALIZADAS EN EL CENTRO:"):
+def limpiar_tabla(tabla, frase_objetivo, ultima_asignatura=None):
     tabla_limpia = []
 
-    # Paso 1: eliminar filas basura que solo tienen la frase y Nones
+    # Paso 1: eliminar filas basura
     for fila in tabla:
         if fila[0] == frase_objetivo and all(c in [None, '', ' '] for c in fila[1:]):
             continue
         tabla_limpia.append(fila)
 
     if not tabla_limpia:
-        return []
+        return [], ultima_asignatura
 
-    # Paso 2: eliminar la primera columna si todas las filas empiezan con None
-    if all(fila[0] == None for fila in tabla_limpia):
+    # Paso 2: eliminar primera columna si todas tienen None
+    if all(fila[0] is None for fila in tabla_limpia):
         tabla_limpia = [fila[1:] for fila in tabla_limpia]
 
-    # Paso 3: rellenar los Nones en la columna de asignaturas (columna 0)
-    return rellenar_asignaturas(tabla_limpia, indice_columna=0)
+    # Paso 3: rellenar asignaturas y devolver la última
+    tabla_rellena, ultima_asignatura = rellenar_asignaturas(tabla_limpia, indice_columna=0, ultima_asignatura=ultima_asignatura)
+
+    return tabla_rellena, ultima_asignatura
 
 def limpiar_tablas_finales(tablas):
     tablas_limpias = []
@@ -223,14 +226,25 @@ def limpiar_tablas_finales(tablas):
 
 def procesar_pdf(pdf_path):
     tablas = extraer_tablas(pdf_path)
+    tablas_procesadas = []
+    ultima_asignatura = None
+
+    for tabla in tablas:
+        if not tabla:
+            continue
+        tabla_limpia, ultima_asignatura = limpiar_tabla(tabla, KEY_PHRASE, ultima_asignatura)
+    tablas_procesadas.append(tabla_limpia)
     tablas_limpias = [limpiar_tabla(tabla) for tabla in tablas]
     tablas_finales = limpiar_tablas_finales(tablas_limpias)
 
     
     return tablas_finales
 
-def normalizar_asignatura(nombre: str) -> str:
+def normalizar_asignatura(nombre) -> str:
+    if not isinstance(nombre, str) or not nombre.strip():
+        return ""
     return nombre.replace(" ", "").strip()
+
 
 def convertir_pdf_a_df(lista_tablas, codigo_alumno):
     datos_limpios = []

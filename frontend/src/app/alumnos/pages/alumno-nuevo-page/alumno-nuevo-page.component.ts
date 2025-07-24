@@ -13,7 +13,7 @@ import { AlumnosService } from '@/alumnos/services/alumnos.service';
   imports: [ListaAsignaturasComponent, FormsModule, NgClass, SubirFicheroComponent],
   templateUrl: './alumno-nuevo-page.component.html',
 })
-export class AlumnoNuevoPageComponent implements OnInit { 
+export class AlumnoNuevoPageComponent  { 
 
   activatedRoute = inject(ActivatedRoute)
   alumnosService = inject(AlumnosService);
@@ -24,22 +24,22 @@ export class AlumnoNuevoPageComponent implements OnInit {
   // nuevaNota: number | null = null;
   alumnoId = this.activatedRoute.snapshot.paramMap.get('id');
 
-  alumnoResource = rxResource({
-    request: () => ({id:this.alumnoId}),
-    loader: ({request}) => {
-      return this.alumnosService.getAlumnoById(request.id!);
-    },
-  })
+  // alumnoResource = rxResource({
+  //   request: () => ({id:this.alumnoId}),
+  //   loader: ({request}) => {
+  //     return this.alumnosService.getAlumnoById(request.id!);
+  //   },
+  // })
 
-  ngOnInit(): void {
-    this.alumnoResource.reload();
-    console.log('Alumno Nuevo Page - ngOnInit');
-    if (this.alumnoResource.hasValue()) {
-      const alumno = this.alumnoResource.value;
-      console.log('Alumno Nuevo Page', alumno);
-      this.alumnos.set(alumno().map(item => [item[0], +item[1]] as [string, number]));
-    }
-  }
+  // ngOnInit(): void {
+  //   this.alumnoResource.reload();
+  //   console.log('Alumno Nuevo Page - ngOnInit');
+  //   if (this.alumnoResource.hasValue()) {
+  //     const alumno = this.alumnoResource.value;
+  //     console.log('Alumno Nuevo Page', alumno);
+  //     this.alumnos.set(alumno().map(item => [item[0], +item[1]] as [string, number]));
+  //   }
+  // }
 
   // agregarFila() {
   //   if (this.nuevaAsignatura.trim() && this.nuevaNota !== null) {

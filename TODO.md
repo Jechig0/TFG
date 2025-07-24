@@ -12,6 +12,7 @@ FRONTEND
 -Para alumno nuevo: si hay ya notas en el backend, que se muestren correctamente
 
 BACKEND
+-Arreglar lectura PDF (falla si una asignatura tiene calificaciones en dos páginas distintas)
 
 REUNION
 -Filtrado por optativas y por titulación.
@@ -21,3 +22,4 @@ REUNION
 -Dashboard administrador.
 -Añadir base de datos.
 -Modificar estructura del backend (separar rutas del main para mejor comprensión).
+-Apendices: Manual de instalación y manual de usuario
