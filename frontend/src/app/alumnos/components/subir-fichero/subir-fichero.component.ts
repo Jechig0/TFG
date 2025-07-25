@@ -27,14 +27,19 @@ export class SubirFicheroComponent {
       const formData = new FormData();
       formData.append('file', file);
 
-      this.alumnosService.enviarInformePdf(this.alumnoId!, formData).subscribe({
-        next: (response) => {
-          this.datosExtraidos.emit(response);
-        },
-        error: () => {
-          alert('El fichero enviado no es un PDF válido o no se ha podido procesar.');
-        }
-      });
+    this.alumnosService.enviarInformePdf(this.alumnoId!, formData).subscribe({
+      next: (response) => {
+    // Guardar en sessionStorage
+        sessionStorage.setItem(`pdf-datos-${this.alumnoId}`, JSON.stringify(response));
+    
+    // Emitir para mostrar
+        this.datosExtraidos.emit(response);
+  },
+      error: () => {
+        alert('El fichero enviado no es un PDF válido o no se ha podido procesar.');
+      }
+    });
+
     }
   }
 }

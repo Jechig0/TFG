@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '@environments/environment';
-import { Observable, tap } from 'rxjs';
+import { map, Observable, of, tap } from 'rxjs';
 import { AsignaturaNota } from '../interfaces/pdfresponse.interface';
 
 @Injectable({
@@ -13,16 +13,43 @@ export class AlumnosService {
 
   private http = inject(HttpClient)
 
-  getAlumnoById(id: string): Observable<string[][]> {
-    return this.http.get<string[][]>(`${this.apiUrl}/alumno/${id}`);
+  alumnos = signal<Record<string, [string, number][]>>({});
+  mediaAlumnos = signal<Record<string, string>>({});
+
+
+  getAlumnoById(id: string): Observable<[string, number][]> {
+  const cache = this.alumnos();
+  if (cache[id]) {
+    console.log('Cache hit for alumno:', id);
+    return of(cache[id]); // Devuelve lo cacheado
   }
+
+  return this.http.get<[string, number][]>(`${this.apiUrl}/alumno/${id}`).pipe(
+    map((data) => {
+      const resultado = data.map(([asignatura, nota]) => [asignatura, +nota] as [string, number]);
+      this.alumnos.update(prev => ({ ...prev, [id]: resultado }));
+      return resultado;
+    })
+    );
+  }
+
 
   getMediaAlumno(id: string): Observable<string>{
-    return this.http.get<string>(`${this.apiUrl}/media/${id}`);
+    const cache = this.mediaAlumnos();
+    if (cache[id]) {
+      console.log('Cache hit for mediaAlumno:', id);
+      return of(cache[id]);
+  }
+    return this.http.get<string>(`${this.apiUrl}/media/${id}`).pipe(
+      map((media) => {
+      this.mediaAlumnos.update(prev => ({ ...prev, [id]: media }));
+      return media;
+    })
+  );
   }
 
-  getAsignaturas(): Observable<string[][]>{
-    return this.http.get<string[][]>(`${this.apiUrl}/asignaturas`);
+  getAsignaturas(id: string): Observable<string[][]>{
+    return this.http.get<string[][]>(`${this.apiUrl}/asignaturas/${id}`);
   }
   
   getProbabilidadAcceso(id:string, asignatura: string): Observable<number>{

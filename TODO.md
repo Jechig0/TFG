@@ -10,6 +10,7 @@ GENERAL
 FRONTEND
 -Trabajar creación manual de alumnos (notas manuales)
 -Para alumno nuevo: si hay ya notas en el backend, que se muestren correctamente
+-Añadir almacenamiento en caché para no tener que pedir otra vez el pdf al recargar.
 
 BACKEND
 -Arreglar lectura PDF (falla si una asignatura tiene calificaciones en dos páginas distintas)

@@ -29,7 +29,7 @@ export class ListaAsignaturasComponent {
 
   asignaturaResource = rxResource({
     loader: () => {
-      return this.alumnosService.getAsignaturas()
+      return this.alumnosService.getAsignaturas(this.alumnoId)
     }
   })
 

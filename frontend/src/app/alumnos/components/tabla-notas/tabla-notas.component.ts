@@ -10,6 +10,6 @@ import { ActivatedRoute } from '@angular/router';
   templateUrl: './tabla-notas.component.html',
 })
 export class TablaNotasComponent { 
-  alumnos = input.required<string[][]>()
+  alumnos = input.required<[string, number][]>()
   mediaAlumno = input.required<String>()
 }

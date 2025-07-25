@@ -90,16 +90,13 @@ def get_media(id:str):
     
     return JSONResponse(status_code=200, content=jsonable_encoder(media))
 
-@app.get("/asignaturas", tags=['Asignatura'])
-def get_asignatura():
+@app.get("/asignaturas/{id}", tags=['Asignatura'])
+def get_asignatura(id:str):
     conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
-    cur = conn.cursor()
-    #Al hacer la consulta en sql, hay una asignatura null. La quito de los resultados
-    cur.execute("SELECT distinct nombreasignatura FROM v_calificaciones WHERE nombreasignatura IS NOT NULL")
-    asignaturas = cur.fetchall()
+    asignaturas = funciones.obtener_optativas_por_titulación(id, conn)
     conn.close()
     if not asignaturas:
-        raise HTTPException(status_code=500, detail='No se han podido obtener las asignaturas')
+        raise HTTPException(status_code=400, detail='No se han podido obtener las asignaturas')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))
 
@@ -139,14 +136,20 @@ async def procesar_pdf(id: str, file: UploadFile = File(...)):
     df = df.drop_duplicates(subset=["CODIGOALUM", "NOMBREASIGNATURA"], keep="last").reset_index(drop=True)
     pdf_info = tablas_finales
     # Construir respuesta: nombre de asignatura + nota literal
-    resultado = []
+    resultado_dict = {}
+
     for tabla in tablas_finales:
         for fila in tabla:
             if len(fila) >= 6:
-                resultado.append({
-                    "asignatura": fila[0],
-                    "nota": fila[4]
-                })
+                asignatura = fila[0]
+                nota = fila[4]
+                resultado_dict[asignatura] = {
+                    "asignatura": asignatura,
+                    "nota": nota
+                }
+
+# Convertir de vuelta a lista
+    resultado = list(resultado_dict.values())
 
     os.remove(temp_pdf_path)
     if(resultado == []):

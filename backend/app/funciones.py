@@ -180,7 +180,7 @@ def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
 
     return nueva_tabla, asignatura
 
-def limpiar_tabla(tabla, frase_objetivo, ultima_asignatura=None):
+def limpiar_tabla(tabla, ultima_asignatura=None ,frase_objetivo="DATOS RELATIVOS A LAS ACTIVIDADES FORMATIVAS REALIZADAS EN EL CENTRO:"):
     tabla_limpia = []
 
     # Paso 1: eliminar filas basura
@@ -232,10 +232,9 @@ def procesar_pdf(pdf_path):
     for tabla in tablas:
         if not tabla:
             continue
-        tabla_limpia, ultima_asignatura = limpiar_tabla(tabla, KEY_PHRASE, ultima_asignatura)
-    tablas_procesadas.append(tabla_limpia)
-    tablas_limpias = [limpiar_tabla(tabla) for tabla in tablas]
-    tablas_finales = limpiar_tablas_finales(tablas_limpias)
+        tabla_limpia, ultima_asignatura = limpiar_tabla(tabla, ultima_asignatura)
+        tablas_procesadas.append(tabla_limpia)
+    tablas_finales = limpiar_tablas_finales(tablas_procesadas)
 
     
     return tablas_finales
@@ -331,3 +330,14 @@ def calcular_probabilidad_entrada_df(notas_corte: dict, df: pd.DataFrame ,codigo
 
     probabilidad = (supera / total) * 100
     return round(probabilidad, 2)
+
+def obtener_optativas_por_titulación(id: str, conn: oracledb.Connection):
+    titulacion = int(id[:4])
+    cur = conn.cursor()
+    cur.execute("""
+                SELECT nombre
+                FROM v_optativas
+                WHERE titulacion = :titulacion_alumno AND UPPER(ofertada) IN ('SI', 'SÍ')
+                """, titulacion_alumno=titulacion)
+    optativas = cur.fetchall()
+    return optativas
