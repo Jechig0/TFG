@@ -1,3 +1,4 @@
+#Importaciones necesarias en main.
 import math
 import os
 import tempfile
@@ -8,14 +9,18 @@ import funciones
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 import pandas as pd
+from routers.alumno import alumnoRouter
+from routers.asignatura import asignaturaRouter
 
 
+#Inicialización de la aplicación FastAPI
 app = FastAPI(
     title='FastAPI', #Título que aparecerá en la documentación
     description="API Recomendador Asignaturas", #Descripción debajo del título
     version='1.0.0', #Número de la etiqueta gris al lado del título
 )
 
+#Configuración de CORS para permitir peticiones desde cualquier origen (para el trabajo en desarrollo, que solo se ejecuta en localhost)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,6 +28,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(alumnoRouter)
+app.include_router(asignaturaRouter)
 
 #Dirección de la base de datos a la que se va a acceder en las peticiones
 dsn = oracledb.makedsn("afrodita.lcc.uma.es", 1521, sid="APOLO")
@@ -32,48 +40,10 @@ conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
 df = funciones.crear_df(conn)
 pdf_info: list = []
 
-
+# Redirección a la documentación de FastAPI al acceder a la raíz
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse(url='/docs')
-
-@app.get("/alumno/{id}", tags=["Alumno"])
-def get_alumno_by_id(id:str):
-    global df
-    #Creo la conexión y el cursor, y ejecuto la consulta
-    conn = oracledb.connect(user="tfm_puertas", password="JCGRmlbEsc", dsn=dsn)
-    #La subconsulta, que se reutiliza en el codigo, agrupa todas las notas de la base de datos de los alumnos y las asignaturas, y devuelve solo la más alta
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT NOMBREASIGNATURA, NUM_CALIFICACIÓN
-        FROM (
-            SELECT 
-            CODIGOALUM,
-            NOMBREASIGNATURA,
-            NUM_CALIFICACIÓN,
-            ROW_NUMBER() OVER (
-                PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
-                ORDER BY NUM_CALIFICACIÓN DESC
-            ) AS rn
-            FROM v_calificaciones
-            WHERE 
-                (NOMBREASIGNATURA IS NOT NULL 
-                OR NUM_CALIFICACIÓN IS NOT NULL)
-            )
-        WHERE CODIGOALUM = :codigo AND rn = 1
-            """, codigo = id)
-    resultado = cur.fetchall()
-    conn.close()
-    
-    if not resultado:
-        df_filtrado = df[df["CODIGOALUM"] == id]
-        resultado = df_filtrado[["NOMBRE_ORIGINAL", "NUM_CALIFICACIÓN"]].values.tolist()
-
-    #Si no se encuentra el alumno, se devuelve error
-    if not resultado:
-        raise HTTPException(status_code=400, detail=f"No se encontró información para el alumno con código {id}")
-    
-    return JSONResponse(status_code=200, content=jsonable_encoder(resultado))
 
 @app.get("/media/{id}", tags=["Alumno"])
 def get_media(id:str):

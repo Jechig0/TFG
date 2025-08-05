@@ -1,3 +1,5 @@
+#Guardamos las funciones que se usan en el backend de la aplicación para la gestión de alumnos y asignaturas.
+
 # Añadimos todas las librerias necesarias
 import oracledb as oracledb
 import pandas as pd
