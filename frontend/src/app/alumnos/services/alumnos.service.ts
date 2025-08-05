@@ -40,7 +40,7 @@ export class AlumnosService {
       console.log('Cache hit for mediaAlumno:', id);
       return of(cache[id]);
   }
-    return this.http.get<string>(`${this.apiUrl}/media/${id}`).pipe(
+    return this.http.get<string>(`${this.apiUrl}/alumno/${id}/media/`).pipe(
       map((media) => {
       this.mediaAlumnos.update(prev => ({ ...prev, [id]: media }));
       return media;
@@ -49,17 +49,17 @@ export class AlumnosService {
   }
 
   getAsignaturas(id: string): Observable<string[][]>{
-    return this.http.get<string[][]>(`${this.apiUrl}/asignaturas/${id}`);
+    return this.http.get<string[][]>(`${this.apiUrl}/asignatura/${id}`);
   }
   
   getProbabilidadAcceso(id:string, asignatura: string): Observable<number>{
     asignatura = asignatura.replace(/\s+/g, '')
-    return this.http.get<number>(`${this.apiUrl}/probabilidadEntrada/${id}/${asignatura}`)
+    return this.http.get<number>(`${this.apiUrl}/alumno/probabilidadEntrada/${id}/${asignatura}`)
   }
 
   getAfinidadAsignatura(id:string, asignatura: string): Observable<number>{
     asignatura = asignatura.replace(/\s+/g, '')
-    return this.http.get<number>(`${this.apiUrl}/afinidad/${id}/${asignatura}`)
+    return this.http.get<number>(`${this.apiUrl}/alumno/afinidad/${id}/${asignatura}`)
   }
 
   enviarInformePdf(id:string ,file: FormData): Observable<AsignaturaNota[]> {

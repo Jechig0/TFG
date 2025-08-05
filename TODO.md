@@ -14,6 +14,7 @@ FRONTEND
 
 BACKEND
 -Arreglar lectura PDF (falla si una asignatura tiene calificaciones en dos páginas distintas)
+-Revisar endpoint afinidad (Error 500 al añadir un nombre de asignatura incorrecto)
 
 REUNION
 -Filtrado por optativas y por titulación.
@@ -23,4 +24,5 @@ REUNION
 -Dashboard administrador.
 -Añadir base de datos.
 -Modificar estructura del backend (separar rutas del main para mejor comprensión).
--Apendices: Manual de instalación y manual de usuario
+-Apendices: Manual de instalación y manual de usuario.
+-Para el admin dashboard: titulación que más solicita, asignatura más consultada, asignatura con afinidades más altas
