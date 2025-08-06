@@ -103,7 +103,32 @@ WHERE rn = 1"""
     
     df = pd.read_sql(sql, conn)
     return df
+
+def agregar_alumno_df(df: pd.DataFrame, codigo_alumno: str, conn: oracledb.Connection):
+    sql = """
+    SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
+    FROM (
+        SELECT 
+            CODIGOALUM,
+            REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA,
+            NUM_CALIFICACIÓN,
+            ROW_NUMBER() OVER (
+                PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
+                ORDER BY NUM_CALIFICACIÓN DESC
+            ) AS rn
+        FROM informes_alumno
+        WHERE 
+            CODIGOALUM = :codigo_alumno
+            AND NOMBREASIGNATURA IS NOT NULL 
+            AND NUM_CALIFICACIÓN IS NOT NULL
+    )
+    WHERE rn = 1
+    """
+    df_alumno = pd.read_sql(sql, conn, params={"codigo_alumno": codigo_alumno})
+    df_completo = pd.concat([df, df_alumno], ignore_index=True)
     
+    return df_completo
+ 
 def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     # Crear matriz alumno-asignatura
     df['NUM_CALIFICACIÓN'] = pd.to_numeric(df['NUM_CALIFICACIÓN'], errors='coerce')

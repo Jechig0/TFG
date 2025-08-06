@@ -53,9 +53,12 @@ def get_probabilidad_acceso(alumnoId: str, asignatura: str, request: Request):
 
 @alumnoRouter.get("/afinidad/{alumnoId}/{asignatura}", tags=['Afinidad'])
 def get_afinidad(alumnoId: str, asignatura: str, request: Request):
+    pool = request.app.state.pool
     df = request.app.state.df
-    modelo, scaler, matriz, df_clusters = funciones.entrenar_clustering(df)
-    afinidad = funciones.predecir_afinidad_cluster(alumnoId, asignatura, modelo, scaler, matriz, df_clusters, df)
+    with pool.acquire() as conn:
+        df_ampliado = funciones.agregar_alumno_df(df, alumnoId, conn)
+    modelo, scaler, matriz, df_clusters = funciones.entrenar_clustering(df_ampliado)
+    afinidad = funciones.predecir_afinidad_cluster(alumnoId, asignatura, modelo, scaler, matriz, df_clusters, df_ampliado)
     if (afinidad is None):
         raise HTTPException(status_code=400, detail="No se ha encontrado al alumno")
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))

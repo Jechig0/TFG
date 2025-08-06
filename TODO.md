@@ -14,15 +14,14 @@ FRONTEND
 
 BACKEND
 -Arreglar lectura PDF (falla si una asignatura tiene calificaciones en dos páginas distintas)
--Modificar endpoint afinidad para funcionar desde DB
+-Optimizar rendimiento de endpoint probabilidadAcceso.
+-Revisar precisión endpoint afinidad.
+-Trabajar muestras de precisión del cluster
 
 REUNION
--Filtrado por optativas y por titulación.
 -Protección de datos con últimos digitos del DNI.
 -Mensaje error: "No existen datos históricos de calificación de esta asignatura" para asignaturas recién ofertadas.
 -Boton borrado de datos.
 -Dashboard administrador.
--Añadir base de datos.
--Modificar estructura del backend (separar rutas del main para mejor comprensión).
 -Apendices: Manual de instalación y manual de usuario.
 -Para el admin dashboard: titulación que más solicita, asignatura más consultada, asignatura con afinidades más altas
