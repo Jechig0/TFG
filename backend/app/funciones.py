@@ -65,26 +65,22 @@ def calcular_nota_corte(cur, nombre_asignatura):
 def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
-    if not notas_corte:
+    if not notas_corte or len(notas_corte) == 0:
         raise HTTPException(status_code=400, detail=f"No hay datos para la asignatura {nombre_asignatura}")
 
-    total = 0
+    total = len(notas_corte)
     supera = 0
-
-    probabilidad = calcular_probabilidad_entrada_alumno(cur, nombre_asignatura, codigo_alumno, notas_corte)
-
-    #Si estamos usando un alumno de la vista, se ejecuta este bloque
-    if probabilidad == 0 or probabilidad is None:
-        media_alumno, aprobadas = calcular_media_ponderada_vista(cur, codigo_alumno, '2022-23')
-        for curso_acad, nota_corte in notas_corte.items():
-        
-            if media_alumno is not None:
-                total += 1
-                if media_alumno > nota_corte:
-                    supera += 1
-        
-    probabilidad = (supera / total) * 100
-    return round(probabilidad, 2)
+    
+    media = calcular_media_ponderada_alumno(cur, codigo_alumno)[0]
+    if media is None:
+        raise HTTPException(status_code=400, detail=f"No se ha podido calcular la media del alumno {codigo_alumno}")
+    
+    for curso_acad, nota_corte in notas_corte.items():
+        if media > nota_corte: 
+            supera += 1
+    
+    probabilidad = (supera / total) * 100 
+    return probabilidad
 
 def crear_df(conn: oracledb.Connection):
     sql = """SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
@@ -148,6 +144,7 @@ def predecir_afinidad_cluster(alumno_id:str, asignatura:str, modelo:KMeans, scal
     
     return round(notas.mean() / 10, 3)
 
+#Saco del PDF todas las notas, el DNI y el número de expediente del alumno.
 def extraer_tablas(pdf_path):
     tables = []
     lineas_extraidas = []
@@ -165,6 +162,7 @@ def extraer_tablas(pdf_path):
 
     return tables, lineas_extraidas[1], lineas_extraidas[4]
 
+# Rellena las asignaturas en una tabla, reemplazando None o valores vacíos por el último valor no vacío encontrado en la columna.
 def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
     "Reemplaza valores None o vacíos por el último valor no vacío encontrado en una columna."
     asignatura = ultima_asignatura
@@ -188,6 +186,7 @@ def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
 
     return nueva_tabla, asignatura
 
+# Limpia una tabla eliminando filas basura y rellenando asignaturas.
 def limpiar_tabla(tabla, ultima_asignatura=None ,frase_objetivo="DATOS RELATIVOS A LAS ACTIVIDADES FORMATIVAS REALIZADAS EN EL CENTRO:"):
     tabla_limpia = []
 
@@ -209,6 +208,7 @@ def limpiar_tabla(tabla, ultima_asignatura=None ,frase_objetivo="DATOS RELATIVOS
 
     return tabla_rellena, ultima_asignatura
 
+#Finalmente, quita columnas vacías y tablas sin asignaturas, además de la última tabla que no contiene notas.
 def limpiar_tablas_finales(tablas):
     tablas_limpias = []
 
@@ -279,35 +279,6 @@ def calcular_media_ponderada_alumno(cur: oracledb.Cursor, codigo_alumno: str):
         return (None, 0)  # Evitamos división por cero o falta de datos
     ponderada = (media * creditos) / 240
     return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
-
-    
-def calcular_probabilidad_entrada_alumno(cur: oracledb.Cursor, nombre_asignatura: str, codigo_alumno: str, notas_corte: dict = None, df: pd.DataFrame = None, pdf_info: list = None):
-
-    media_alumno, aprobadas = calcular_media_ponderada_alumno(cur, codigo_alumno)
-    total = 0
-    supera = 0
-    #media_alumno = 0.15
-    for curso_acad, nota_corte in notas_corte.items():
-            total += 1
-            if media_alumno > nota_corte:
-                supera += 1
-
-    if total == 0:
-        return 0.0  # El alumno no tiene historial válido
-
-    probabilidad = (supera / total) * 100
-    return round(probabilidad, 2)
-
-def obtener_optativas_por_titulación(id: str, conn: oracledb.Connection):
-    titulacion = int(id[:4])
-    cur = conn.cursor()
-    cur.execute("""
-                SELECT nombre
-                FROM v_optativas
-                WHERE titulacion = :titulacion_alumno AND UPPER(ofertada) IN ('SI', 'SÍ')
-                """, titulacion_alumno=titulacion)
-    optativas = cur.fetchall()
-    return optativas
 
 def validar_pdf(file: File):
     if file.filename != 'ListadoConsultaExpedienteAcademico.pdf':

@@ -46,6 +46,7 @@ def get_probabilidad_acceso(alumnoId: str, asignatura: str, request: Request):
     with pool.acquire() as conn:
         cur = conn.cursor()
         probabilidad = funciones.calcular_probabilidad_entrada(cur, asignatura, alumnoId)
+        cur.close()
     if probabilidad is None:
         raise HTTPException(status_code=400, detail=f"No se ha encontrado la probabilidad de acceso para el alumno {alumnoId} a la asignatura {asignatura}")
     return JSONResponse(status_code=200, content=jsonable_encoder(probabilidad))

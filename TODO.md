@@ -14,7 +14,7 @@ FRONTEND
 
 BACKEND
 -Arreglar lectura PDF (falla si una asignatura tiene calificaciones en dos páginas distintas)
--Revisar endpoint afinidad (Error 500 al añadir un nombre de asignatura incorrecto)
+-Modificar endpoint afinidad para funcionar desde DB
 
 REUNION
 -Filtrado por optativas y por titulación.
