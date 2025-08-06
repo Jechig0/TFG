@@ -16,6 +16,7 @@ BACKEND
 -Arreglar lectura PDF (falla si una asignatura tiene calificaciones en dos páginas distintas)
 -Optimizar rendimiento de endpoint probabilidadAcceso.
 -Revisar precisión endpoint afinidad.
+-Revisar excepciones endpoints probabilidadAcceso y afinidad.
 -Trabajar muestras de precisión del cluster
 
 REUNION
