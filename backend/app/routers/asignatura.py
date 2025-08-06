@@ -3,7 +3,6 @@
 #Añadir las importaciones necesarias
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-import oracledb
 from fastapi import APIRouter, HTTPException, Request
 import funciones as funciones
 
@@ -16,6 +15,6 @@ def get_asignatura(id:str, request: Request):
     with pool.acquire() as conn:
         asignaturas = funciones.obtener_optativas_por_titulación(id, conn)
     if not asignaturas:
-        raise HTTPException(status_code=400, detail='No se han podido obtener las asignaturas')
+        raise HTTPException(status_code=400, detail='No se han podido obtener las asignaturas para el alumno.')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))

@@ -1,14 +1,10 @@
 #Importaciones necesarias en main.
 from contextlib import asynccontextmanager
-import os
-import tempfile
 import oracledb as oracledb
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 import funciones 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.encoders import jsonable_encoder
-import pandas as pd
 from routers.alumno import alumnoRouter
 from routers.asignatura import asignaturaRouter
 

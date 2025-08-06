@@ -1,13 +1,16 @@
 #Guardamos las funciones que se usan en el backend de la aplicación para la gestión de alumnos y asignaturas.
 
 # Añadimos todas las librerias necesarias
+from fastapi import File, HTTPException
 import oracledb as oracledb
 import pandas as pd
 import pdfplumber
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-def calcular_media_ponderada(cur: oracledb.Cursor, codigo_alumno, curso_max):
+# Funciones sobre la vista para probabilidades y machine learning
+
+def calcular_media_ponderada_vista(cur: oracledb.Cursor, codigo_alumno, curso_max):
     cur.execute("""
         SELECT 
             AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
@@ -49,7 +52,7 @@ def calcular_nota_corte(cur, nombre_asignatura):
     for curso_acad, codigos_alumnos in cursos.items():
         medias = []
         for codigo_alum in codigos_alumnos:
-            resultado = calcular_media_ponderada(cur, codigo_alum, curso_acad)
+            resultado = calcular_media_ponderada_vista(cur, codigo_alum, curso_acad)
             if resultado:
                 media, aprobadas = resultado
                 if media is not None and aprobadas > 10:
@@ -59,37 +62,36 @@ def calcular_nota_corte(cur, nombre_asignatura):
 
     return nota_corte_por_año  # Dict: { "2018-19": 6.25, "2019-20": 5.8, ... }
 
-def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno, df, pdf_info):
+def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     if not notas_corte:
-        return 0.0  # No hay base para calcular probabilidad
+        raise HTTPException(status_code=400, detail=f"No hay datos para la asignatura {nombre_asignatura}")
 
     total = 0
     supera = 0
 
-    media_alumno, aprobadas = calcular_media_ponderada(cur, codigo_alumno, '2022-23')
-    #media_alumno = 0.15
-    for curso_acad, nota_corte in notas_corte.items():
+    probabilidad = calcular_probabilidad_entrada_alumno(cur, nombre_asignatura, codigo_alumno, notas_corte)
+
+    #Si estamos usando un alumno de la vista, se ejecuta este bloque
+    if probabilidad == 0 or probabilidad is None:
+        media_alumno, aprobadas = calcular_media_ponderada_vista(cur, codigo_alumno, '2022-23')
+        for curso_acad, nota_corte in notas_corte.items():
         
-        if media_alumno is not None:
-            total += 1
-            if media_alumno > nota_corte:
-                supera += 1
-
-    if total == 0:
-        return calcular_probabilidad_entrada_df(notas_corte, df, codigo_alumno, pdf_info)
-
+            if media_alumno is not None:
+                total += 1
+                if media_alumno > nota_corte:
+                    supera += 1
+        
     probabilidad = (supera / total) * 100
     return round(probabilidad, 2)
 
 def crear_df(conn: oracledb.Connection):
-    sql = """SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA,  NOMBREASIGNATURA AS NOMBRE_ORIGINAL, NUM_CALIFICACIÓN
+    sql = """SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
 FROM (
     SELECT 
         CODIGOALUM,
         REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA,
-        NOMBREASIGNATURA AS NOMBRE_ORIGINAL,
         NUM_CALIFICACIÓN,
         ROW_NUMBER() OVER (
             PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
@@ -148,16 +150,20 @@ def predecir_afinidad_cluster(alumno_id:str, asignatura:str, modelo:KMeans, scal
 
 def extraer_tablas(pdf_path):
     tables = []
+    lineas_extraidas = []
 
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages):
-            page.extract_text()
+            texto = page.extract_text()
+            if texto:
+                lineas = texto.split('\n')
+                lineas_extraidas.extend(lineas[:5])
             page_tables = page.extract_tables()
             for table in page_tables:
                 if table:  # Evita tablas vacías
                     tables.append(table)
 
-    return tables
+    return tables, lineas_extraidas[1], lineas_extraidas[4]
 
 def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
     "Reemplaza valores None o vacíos por el último valor no vacío encontrado en una columna."
@@ -226,8 +232,18 @@ def limpiar_tablas_finales(tablas):
 
     return tablas_limpias
 
-def procesar_pdf(pdf_path):
-    tablas = extraer_tablas(pdf_path)
+def procesar_pdf(pdf_path, id:str, dni:str):
+    if not id or not dni:
+        raise HTTPException(status_code=400, detail='No se han proporcionado DNI o ID válidos.')
+    tablas, dni_pdf, id_pdf = extraer_tablas(pdf_path)
+    dni_pdf = dni_pdf[14:]
+    id_pdf = id_pdf[14:]
+    
+    if dni_pdf.strip() != dni.upper():
+        raise HTTPException(status_code=400, detail=f'El DNI no coincide.')
+    
+    if id_pdf.strip() != id.upper():
+        raise HTTPException(status_code=400, detail=f'El ID no coincide.')
     tablas_procesadas = []
     ultima_asignatura = None
 
@@ -246,83 +262,32 @@ def normalizar_asignatura(nombre) -> str:
         return ""
     return nombre.replace(" ", "").strip()
 
-
-def convertir_pdf_a_df(lista_tablas, codigo_alumno):
-    datos_limpios = []
-
-    for tabla in lista_tablas:
-        for fila in tabla:
-            asignatura = normalizar_asignatura(fila[0])
-            asignatura_original = fila[0]  # Mantener el nombre original
-            nota = fila[4]
-
-            if not asignatura or not nota:
-                continue
-
-            datos_limpios.append({
-                "CODIGOALUM": codigo_alumno,
-                "NOMBREASIGNATURA": asignatura,
-                "NOMBRE_ORIGINAL": asignatura_original,
-                "NUM_CALIFICACIÓN": nota
-            })
-
-    return pd.DataFrame(datos_limpios)
-
-def calcular_media_ponderada_df(df: pd.DataFrame, tablas_pdf: list, codigo_alumno: str):
-    total_creditos = 0
-
-    for tabla in tablas_pdf:
-        for fila in tabla:
-            if len(fila) < 6:
-                continue
-
-            asignatura = fila[0]
-            creditos = fila[1]
-            curso = fila[2]
-            nota_str = fila[4]
-            calificacion_literal = fila[5]
-
-            # Validar datos necesarios
-            if not asignatura or not nota_str or not creditos or not curso or not calificacion_literal:
-                continue
-
-            # Validar calificación aprobada
-            calif_normalizada = calificacion_literal.strip().upper()
-            if calif_normalizada in ["SUSPENSO", "NO PRESENTADO"]:
-                continue
-            total_creditos = float(creditos) + total_creditos
-
-    # Filtrar registros del DF
-    df_filtrado = df[
-        (df["CODIGOALUM"] == codigo_alumno) &
-        (df["NUM_CALIFICACIÓN"].astype(float) >= 5)
-    ]
+def calcular_media_ponderada_alumno(cur: oracledb.Cursor, codigo_alumno: str):
+    cur.execute("""
+        SELECT 
+            AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
+            COUNT(*) AS asignaturas_aprobadas,
+            SUM(CREDITOS) AS creditos_aprobados
+        FROM informes_alumno
+        WHERE CODIGOALUM = :codigo
+        AND CALIFICACIÓN NOT IN ('NO PRESENTADO', 'SUSPENSO')
         
-    try:
-        notas_df = df_filtrado["NUM_CALIFICACIÓN"].astype(float)
-        media_df = notas_df.mean()
-        aprobadas_df = len(df_filtrado)
-        
-    except Exception:
-        media_df = None
-        total_creditos = 0
-        aprobadas_df = 0
-        
-    # Agregar datos del PDF
-
-    ponderada = round((media_df) * (total_creditos / 240), 2)
-    return (ponderada, aprobadas_df)
+    """, codigo=codigo_alumno)
+    resultado = cur.fetchone() #Como esperamos solo un resultado, uso fetchone
+    media, aprobadas, creditos = resultado
+    if media is None or aprobadas == 0:
+        return (None, 0)  # Evitamos división por cero o falta de datos
+    ponderada = (media * creditos) / 240
+    return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
 
     
-def calcular_probabilidad_entrada_df(notas_corte: dict, df: pd.DataFrame ,codigo_alumno: str, datos_pdf: list):
+def calcular_probabilidad_entrada_alumno(cur: oracledb.Cursor, nombre_asignatura: str, codigo_alumno: str, notas_corte: dict = None, df: pd.DataFrame = None, pdf_info: list = None):
 
-    media_alumno, aprobadas = calcular_media_ponderada_df(df, datos_pdf , codigo_alumno)
+    media_alumno, aprobadas = calcular_media_ponderada_alumno(cur, codigo_alumno)
     total = 0
     supera = 0
     #media_alumno = 0.15
     for curso_acad, nota_corte in notas_corte.items():
-        
-        if media_alumno is not None:
             total += 1
             if media_alumno > nota_corte:
                 supera += 1
@@ -343,3 +308,77 @@ def obtener_optativas_por_titulación(id: str, conn: oracledb.Connection):
                 """, titulacion_alumno=titulacion)
     optativas = cur.fetchall()
     return optativas
+
+def validar_pdf(file: File):
+    if file.filename != 'ListadoConsultaExpedienteAcademico.pdf':
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo debe ser exactamente 'ListadoConsultaExpedienteAcademico.pdf'. No modificar el nombre del archivo tras descargar."
+        )
+    
+    if file.content_type != 'application/pdf':
+        raise HTTPException(status_code=400, detail="El archivo debe ser un PDF válido.")
+    
+    return True
+
+def insertar_informe_alumno(conn: oracledb.Connection, codigoalum: str, tablas_finales: list):
+    cur = conn.cursor()
+    for tabla in tablas_finales:
+        for fila in tabla:
+            try:
+                nota_num = float(fila[4])
+            except (ValueError, TypeError):
+                nota_num = None  # o salta esta fila si es inválida
+
+            try:
+                creditos_num = float(fila[1])
+            except (ValueError, TypeError):
+                creditos_num = None  # lo mismo
+            cur.execute("""
+                INSERT INTO informes_alumno
+                (
+                CODIGOALUM, NOMBREASIGNATURA, CREDITOS, CURSO_ACADÉMICO,
+                CONVOCATORIA, NUM_CALIFICACIÓN, CALIFICACIÓN
+                ) VALUES (:1, :2, :3, :4, :5, :6, :7)
+""", (codigoalum, fila[0], creditos_num, fila[2], fila[3], nota_num, fila[5]))
+    conn.commit()
+    cur.close()
+    return True
+
+def obtener_informe_alumno(conn, id):
+    cur = conn.cursor()
+    cur.execute("""
+                SELECT NOMBREASIGNATURA, NUM_CALIFICACIÓN
+                FROM (
+                    SELECT 
+                    CODIGOALUM,
+                    NOMBREASIGNATURA,
+                    NUM_CALIFICACIÓN,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
+                        ORDER BY NUM_CALIFICACIÓN DESC
+                    ) AS rn
+                    FROM informes_alumno
+                    WHERE 
+                        (NOMBREASIGNATURA IS NOT NULL 
+                        OR NUM_CALIFICACIÓN IS NOT NULL)
+                    )
+                WHERE CODIGOALUM = :codigo AND rn = 1
+                    """, codigo = id)
+    
+    resultado = cur.fetchall()
+    cur.close()
+    
+    if not resultado:
+        return []
+    
+    return resultado
+
+def borrar_informe_alumno(conn: oracledb.Connection, id: str):
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM informes_alumno
+        WHERE CODIGOALUM = :codigo
+    """, codigo=id)
+    conn.commit()
+    cur.close()
