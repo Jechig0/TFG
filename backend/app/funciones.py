@@ -66,7 +66,7 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     if not notas_corte or len(notas_corte) == 0:
-        raise HTTPException(status_code=400, detail=f"No hay datos para la asignatura {nombre_asignatura}")
+        raise HTTPException(status_code=400, detail=f"No hay datos históricos para la asignatura {nombre_asignatura}")
 
     total = len(notas_corte)
     supera = 0
@@ -378,3 +378,24 @@ def borrar_informe_alumno(conn: oracledb.Connection, id: str):
     """, codigo=id)
     conn.commit()
     cur.close()
+    
+    return True
+
+def obtener_optativas_por_titulacion(id: str, conn: oracledb.Connection):
+    titulacion_id = id[:4]
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT DISTINCT NOMBRE
+        FROM v_optativas
+        WHERE TITULACION = :titulacion
+        AND NOMBRE IS NOT NULL
+        AND UPPER(OFERTADA) IN ('SÍ', 'SI')
+    """, titulacion=titulacion_id)
+    
+    asignaturas = cur.fetchall()
+    cur.close()
+    
+    if not asignaturas:
+        return []
+    
+    return asignaturas

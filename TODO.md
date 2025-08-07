@@ -25,4 +25,4 @@ REUNION
 -Boton borrado de datos.
 -Dashboard administrador.
 -Apendices: Manual de instalación y manual de usuario.
--Para el admin dashboard: titulación que más solicita, asignatura más consultada, asignatura con afinidades más altas
+-Para el admin dashboard: titulación que más solicita, asignatura más consultada, asignatura con afinidades más altas, asignatura con mayor probabilidad de acceso.

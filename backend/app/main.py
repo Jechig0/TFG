@@ -7,6 +7,7 @@ import funciones
 from fastapi.middleware.cors import CORSMiddleware
 from routers.alumno import alumnoRouter
 from routers.asignatura import asignaturaRouter
+from routers.admin import adminRouter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,6 +55,7 @@ app.add_middleware(
 
 app.include_router(alumnoRouter)
 app.include_router(asignaturaRouter)
+app.include_router(adminRouter)
 
 # Redirección a la documentación de FastAPI al acceder a la raíz
 @app.get("/", include_in_schema=False)

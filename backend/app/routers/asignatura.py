@@ -13,8 +13,8 @@ asignaturaRouter = APIRouter(prefix="/asignatura", tags=["Asignatura"])
 def get_asignatura(id:str, request: Request):
     pool = request.app.state.pool
     with pool.acquire() as conn:
-        asignaturas = funciones.obtener_optativas_por_titulación(id, conn)
+        asignaturas = funciones.obtener_optativas_por_titulacion(id, conn)
     if not asignaturas:
-        raise HTTPException(status_code=400, detail='No se han podido obtener las asignaturas para el alumno.')
+        raise HTTPException(status_code=400, detail='No se han encontrado asignaturas para la titulación.')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))
