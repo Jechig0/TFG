@@ -46,9 +46,12 @@ def get_probabilidad_acceso(alumnoId: str, asignatura: str, request: Request):
     with pool.acquire() as conn:
         cur = conn.cursor()
         probabilidad = funciones.calcular_probabilidad_entrada(cur, asignatura, alumnoId)
+        if probabilidad is None:
+            raise HTTPException(status_code=400, detail=f"No se ha encontrado la probabilidad de acceso para el alumno {alumnoId} a la asignatura {asignatura}")
+        asignatura_estandar = funciones.obtener_asignatura_sin_normalizar(conn, asignatura)
+        funciones.insertar_probabilidad_alumno(conn, alumnoId, asignatura_estandar, probabilidad)
         cur.close()
-    if probabilidad is None:
-        raise HTTPException(status_code=400, detail=f"No se ha encontrado la probabilidad de acceso para el alumno {alumnoId} a la asignatura {asignatura}")
+
     return JSONResponse(status_code=200, content=jsonable_encoder(probabilidad))
 
 @alumnoRouter.get("/afinidad/{alumnoId}/{asignatura}", tags=['Afinidad'])
@@ -61,6 +64,9 @@ def get_afinidad(alumnoId: str, asignatura: str, request: Request):
     afinidad = funciones.predecir_afinidad_cluster(alumnoId, asignatura, modelo, scaler, matriz, df_clusters, df_ampliado)
     if (afinidad is None):
         raise HTTPException(status_code=400, detail="No se ha encontrado al alumno")
+    with pool.acquire() as conn:
+        asignatura_estandar = funciones.obtener_asignatura_sin_normalizar(conn, asignatura) 
+        funciones.insertar_afinidad_alumno(conn, alumnoId, asignatura_estandar, afinidad)
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
 
 @alumnoRouter.post("/{id}/subir-informe")

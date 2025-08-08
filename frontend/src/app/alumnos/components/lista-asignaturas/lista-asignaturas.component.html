@@ -38,7 +38,7 @@
     <h1>Calculando para {{this.selectedAsignatura()}}, por favor espere unos segundos...</h1>
 }
 @else {
-    <h1>Probabilidad de entrada en {{this.selectedAsignatura()}}: {{this.probabilidadAccesoSignal()}}</h1>
+    <h1>Probabilidad de entrada en {{this.selectedAsignatura()}}: {{this.probabilidadAccesoSignal() | percent:'1.2-2'}}</h1>
     <h1>Afinidad con {{this.selectedAsignatura()}}: {{this.afinidadAsignaturaSignal() | percent:'1.2-2'}}</h1>
 }
 </div>

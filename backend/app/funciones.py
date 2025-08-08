@@ -79,7 +79,7 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
         if media > nota_corte: 
             supera += 1
     
-    probabilidad = (supera / total) * 100 
+    probabilidad = (supera / total)
     return probabilidad
 
 def crear_df(conn: oracledb.Connection):
@@ -399,3 +399,143 @@ def obtener_optativas_por_titulacion(id: str, conn: oracledb.Connection):
         return []
     
     return asignaturas
+
+def check_admin(conn: oracledb.Connection, user: str, password: str):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT VALIDA_USUARIO(:p_user, :p_password) AS resultado FROM dual
+    """, p_user=user, p_password=password)
+    
+    resultado = cur.fetchone()[0] 
+    cur.close()
+    
+    return resultado
+
+def numero_consultas_titulaciones(conn: oracledb.Connection):
+    cur = conn.cursor()
+    cur.execute("""
+            SELECT TITULACION, COUNT(*) AS TOTAL_CONSULTAS
+            FROM ADMIN_INFO
+            GROUP BY TITULACION
+            ORDER BY TOTAL_CONSULTAS DESC
+            FETCH FIRST 5 ROWS ONLY
+            """)
+    titulaciones = cur.fetchall()
+    print(titulaciones)
+    cur.close()
+    
+    if not titulaciones:
+        return []
+    
+    return titulaciones
+
+def asignaturas_populares(conn: oracledb.Connection):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT NOMBREASIGNATURA, COUNT(*) AS TOTAL_CONSULTAS
+        FROM ADMIN_INFO
+        GROUP BY NOMBREASIGNATURA
+        ORDER BY TOTAL_CONSULTAS DESC
+        FETCH FIRST 5 ROWS ONLY
+    """)
+    asignaturas = cur.fetchall()
+    cur.close()
+    
+    if not asignaturas:
+        return []
+    
+    return asignaturas
+
+def asignaturas_afinidad(conn: oracledb.Connection):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT NOMBREASIGNATURA, AVG(AFINIDAD) AS AFINIDAD_MEDIA
+        FROM ADMIN_INFO
+        GROUP BY NOMBREASIGNATURA
+        ORDER BY AFINIDAD_MEDIA DESC
+        FETCH FIRST 5 ROWS ONLY
+    """)
+    asignaturas = cur.fetchall()
+    cur.close()
+    
+    if not asignaturas:
+        return []
+    
+    return asignaturas
+    
+
+def asignaturas_probabilidad(conn: oracledb.Connection):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT NOMBREASIGNATURA, AVG(PROBABILIDAD) AS PROB_MEDIA
+        FROM ADMIN_INFO
+        GROUP BY NOMBREASIGNATURA
+        ORDER BY PROB_MEDIA DESC
+        FETCH FIRST 5 ROWS ONLY
+    """)
+    asignaturas = cur.fetchall()
+    cur.close()
+    
+    if not asignaturas:
+        return []
+    
+    return asignaturas
+
+def insertar_afinidad_alumno(conn: oracledb.Connection, alumno_id: str, asignatura: str, afinidad: float):
+    titulacion = alumno_id[:4]  # Asumiendo que los primeros 4 caracteres son la titulación
+    cur = conn.cursor()
+    cur.execute("""
+    MERGE INTO ADMIN_INFO ai
+    USING (SELECT :alumno AS ID_ALUMNO, :asignatura AS NOMBREASIGNATURA FROM dual) src
+    ON (ai.ID_ALUMNO = src.ID_ALUMNO AND ai.NOMBREASIGNATURA = src.NOMBREASIGNATURA)
+    WHEN MATCHED THEN
+        UPDATE SET AFINIDAD = :afinidad
+    WHEN NOT MATCHED THEN
+        INSERT (ID_ALUMNO, NOMBREASIGNATURA, TITULACION, AFINIDAD)
+        VALUES (:alumno, :asignatura, :titulacion, :afinidad)
+""", alumno=alumno_id, asignatura=asignatura, titulacion=titulacion, afinidad=afinidad)
+    conn.commit()
+    cur.close()
+    
+    return True
+
+def insertar_probabilidad_alumno(conn: oracledb.Connection, alumno_id: str, asignatura: str, probabilidad: float):
+    titulacion = alumno_id[:4]  # Asumiendo que los primeros 4 caracteres son la titulación
+    cur = conn.cursor()
+    cur.execute("""
+    MERGE INTO ADMIN_INFO ai
+    USING (SELECT :alumno AS ID_ALUMNO, :asignatura AS NOMBREASIGNATURA FROM dual) src
+    ON (ai.ID_ALUMNO = src.ID_ALUMNO AND ai.NOMBREASIGNATURA = src.NOMBREASIGNATURA)
+    WHEN MATCHED THEN
+        UPDATE SET PROBABILIDAD = :prob
+    WHEN NOT MATCHED THEN
+        INSERT (ID_ALUMNO, NOMBREASIGNATURA, TITULACION, PROBABILIDAD)
+        VALUES (:alumno, :asignatura, :titulacion, :prob)
+    """, alumno=alumno_id, asignatura=asignatura, titulacion=titulacion, prob=probabilidad)
+
+    conn.commit()
+    cur.close()
+    
+    return True
+
+def reiniciar_admin_db(conn: oracledb.Connection):
+    cur = conn.cursor()
+    cur.execute(""" 
+                DELETE FROM ADMIN_INFO
+                """)
+    conn.commit()
+    cur.close()
+    
+    return True
+
+def obtener_asignatura_sin_normalizar(conn: oracledb.Connection, asignatura: str):
+    cur = conn.cursor()
+    cur.execute(""" 
+                SELECT DISTINCT NOMBREASIGNATURA
+                FROM V_CALIFICACIONES
+                WHERE REPLACE(NOMBREASIGNATURA, ' ', '') = :asignatura
+                """, asignatura=asignatura)
+    asignatura = cur.fetchone()[0]
+    cur.close()
+    
+    return asignatura
