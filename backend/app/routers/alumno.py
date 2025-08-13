@@ -69,6 +69,19 @@ def get_afinidad(alumnoId: str, asignatura: str, request: Request):
         funciones.insertar_afinidad_alumno(conn, alumnoId, asignatura_estandar, afinidad)
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
 
+@alumnoRouter.post("/verificar")
+def verificar_alumno(id_alumno: str, dni: str, request:Request):
+    if not id_alumno or not dni:
+        raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
+    pool = request.app.state.pool
+    with pool.acquire() as conn:
+        try:
+            existe = funciones.verificar_alumno(conn, id_alumno, dni)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error en la base de datos: {str(e)}")
+
+    return JSONResponse(status_code=200, content=jsonable_encoder({"existe": existe}))
+
 @alumnoRouter.post("/{id}/subir-informe")
 async def procesar_pdf(id: str, request: Request ,file: UploadFile = File(...)):
     funciones.validar_pdf(file)
@@ -76,9 +89,8 @@ async def procesar_pdf(id: str, request: Request ,file: UploadFile = File(...)):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
         temp_pdf.write(await file.read())
         temp_pdf_path = temp_pdf.name
-    
-    tablas_finales = funciones.procesar_pdf(temp_pdf_path, id=id, dni='0860B')
     with pool.acquire() as conn:
+        tablas_finales = funciones.procesar_pdf(conn, temp_pdf_path, id=id, dni='0860B')
         # Borramos el informe anterior del alumno si existe para evitar duplicados, considerando que
         # si se sube un nuevo informe, tendrá información actualizada.
         funciones.borrar_informe_alumno(conn, id)

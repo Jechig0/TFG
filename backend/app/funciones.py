@@ -1,6 +1,7 @@
 #Guardamos las funciones que se usan en el backend de la aplicación para la gestión de alumnos y asignaturas.
 
 # Añadimos todas las librerias necesarias
+import hashlib
 from fastapi import File, HTTPException
 import oracledb as oracledb
 import pandas as pd
@@ -257,9 +258,9 @@ def limpiar_tablas_finales(tablas):
 
     return tablas_limpias
 
-def procesar_pdf(pdf_path, id:str, dni:str):
+def procesar_pdf(conn:oracledb.Connection, pdf_path, id:str, dni:str):
     if not id or not dni:
-        raise HTTPException(status_code=400, detail='No se han proporcionado DNI o ID válidos.')
+        raise HTTPException(status_code=400, detail='El ID o el DNI proporcionados no coinciden con el que figura en el expediente.')
     tablas, dni_pdf, id_pdf = extraer_tablas(pdf_path)
     dni_pdf = dni_pdf[14:]
     id_pdf = id_pdf[14:]
@@ -271,6 +272,8 @@ def procesar_pdf(pdf_path, id:str, dni:str):
         raise HTTPException(status_code=400, detail=f'El ID no coincide.')
     tablas_procesadas = []
     ultima_asignatura = None
+    
+    guardar_alumno_verificado(conn, id_pdf, dni_pdf)
 
     for tabla in tablas:
         if not tabla:
@@ -281,6 +284,36 @@ def procesar_pdf(pdf_path, id:str, dni:str):
 
     
     return tablas_finales
+
+def guardar_alumno_verificado(conn, id_alumno: str, dni: str):
+    # Crear hash del DNI en mayúsculas y sin espacios
+    dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
+    
+    cur = conn.cursor()
+    cur.execute("""
+        MERGE INTO ALUMNOS_VERIFICADOS a
+        USING (SELECT :id_alumno AS CODIGOALUM, :dni_hash AS DNI_HASH FROM dual) src
+        ON (a.CODIGOALUM = src.CODIGOALUM)
+        WHEN MATCHED THEN 
+            UPDATE SET a.DNI_HASH = src.DNI_HASH
+        WHEN NOT MATCHED THEN
+            INSERT (CODIGOALUM, DNI_HASH) VALUES (src.CODIGOALUM, src.DNI_HASH)
+    """, id_alumno=id_alumno, dni_hash=dni_hash)
+    conn.commit()
+    return True
+    
+def verificar_alumno(conn, id_alumno: str, dni: str) -> bool:
+    dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
+
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 1 
+        FROM ALUMNOS_VERIFICADOS
+        WHERE CODIGOALUM = :id_alumno AND DNI_HASH = :dni_hash
+    """, id_alumno=id_alumno, dni_hash=dni_hash)
+
+    return cur.fetchone() is not None
+
 
 def normalizar_asignatura(nombre) -> str:
     if not isinstance(nombre, str) or not nombre.strip():

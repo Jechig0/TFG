@@ -1,20 +1,27 @@
-<div class="form-control w-full max-w-xs space-y-2 text-center items-center">
+<div class="form-control w-full max-w-xs space-y-3 text-center items-center">
+
+  <!-- Código alumno -->
   <input
     type="text"
     placeholder="Código del alumno"
-    #txtSearch
-    (keydown.enter)="goToNuevoAlumno(txtSearch.value)"
+    #codigoAlumno
     class="input input-bordered input-primary w-full"
   />
 
+  <!-- DNI -->
+  <input
+    type="text"
+    placeholder="4 últimos dígitos del DNI + letra"
+    #dni
+    class="input input-bordered input-secondary w-full"
+  />
+
+  <!-- Botón -->
   <button
     class="btn btn-primary w-full"
-    (click)="goToNuevoAlumno(txtSearch.value)"
+    (click)="validarYRedirigir(codigoAlumno.value, dni.value)"
   >
     Acceder
   </button>
 
-  @if (error) {
-    <p class="text-red-500 mt-1 text-sm">{{ error }}</p>
-  }
 </div>

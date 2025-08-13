@@ -1,17 +1,33 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { TextInputComponent } from "@alumnos/components/text-input/text-input.component";
+import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-main-page',
-  imports: [TextInputComponent],
+  selector: 'main-page',
   templateUrl: './main-page.component.html',
+  // styleUrls: ['./main-page.component.css']
 })
-export class MainPageComponent { 
+export class MainPageComponent implements OnInit {
+  private router = inject(Router);
+  mensaje = '';
+  textoBienvenida = 'Recomendador de Asignaturas';
 
-  router = inject(Router);
+  ngOnInit() {
+    this.animarTexto();
+  }
 
-    goToInsert() {
-      this.router.navigate([`/nuevo-alumno`])
-  } 
+  animarTexto() {
+    let i = 0;
+    const intervalo = setInterval(() => {
+      if (i < this.textoBienvenida.length) {
+        this.mensaje += this.textoBienvenida[i];
+        i++;
+      } else {
+        clearInterval(intervalo);
+      }
+    }, 80); // velocidad de escritura
+  }
+
+  goToIdentificacion() {
+    this.router.navigate(['/alumno']);
+  }
 }

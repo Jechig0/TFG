@@ -1,3 +1,28 @@
-<div>
-    <text-input />
+<div class="flex flex-col items-center justify-center min-h-screen bg-base-200 p-6 text-center">
+  
+  <!-- Mensaje animado -->
+  <h1 class="text-4xl sm:text-5xl font-bold mb-4 animate-typing overflow-hidden whitespace-nowrap border-r-4 border-primary pr-2">
+    {{ mensaje }}
+  </h1>
+  
+  <!-- Descripción -->
+  <p class="text-lg sm:text-xl max-w-2xl mb-6 px-4 py-2">
+    Obten recomendaciones personalizadas según tu expediente académico
+    Soporte para las titulaciones:
+  </p>
+
+  <!-- Lista de titulaciones -->
+  <ul class="list-disc list-inside mb-6 text-left text-base sm:text-lg">
+    <li>Grado en Ingeniería Informática</li>
+    <li>Grado en Ingeniería del Software</li>
+    <li>Grado en Ciencias de la Computación e Inteligencia Artificial</li>
+  </ul>
+
+  <!-- Botón de inicio -->
+  <button 
+    class="btn btn-primary btn-lg w-full sm:w-auto"
+    (click)="goToIdentificacion()"
+  >
+    Iniciar
+  </button>
 </div>

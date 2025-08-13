@@ -13,7 +13,7 @@ export const routes: Routes = [
     },
 
     {
-        path: 'nuevo-alumno',
+        path: 'alumno',
         loadComponent: () => import('./alumnos/pages/enviar-numero-expediente-page/enviar-numero-expediente-page.component').then(m => m.EnviarNumeroExpedienteComponent)
     },
 

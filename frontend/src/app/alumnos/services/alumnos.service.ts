@@ -33,7 +33,6 @@ export class AlumnosService {
     );
   }
 
-
   getMediaAlumno(id: string): Observable<string>{
     const cache = this.mediaAlumnos();
     if (cache[id]) {
@@ -46,6 +45,14 @@ export class AlumnosService {
       return media;
     })
   );
+  }
+
+  verificarAlumno(id: string, dni:string): Observable<{existe: boolean}>{
+    return this.http.post<{existe: boolean}>(`${this.apiUrl}/verificar`, {
+    id_alumno: id,
+    dni: dni
+  });
+
   }
 
   getAsignaturas(id: string): Observable<string[][]>{
