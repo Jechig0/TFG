@@ -262,8 +262,8 @@ def procesar_pdf(conn:oracledb.Connection, pdf_path, id:str, dni:str):
     if not id or not dni:
         raise HTTPException(status_code=400, detail='El ID o el DNI proporcionados no coinciden con el que figura en el expediente.')
     tablas, dni_pdf, id_pdf = extraer_tablas(pdf_path)
-    dni_pdf = dni_pdf[14:]
-    id_pdf = id_pdf[14:]
+    dni_pdf:str = dni_pdf[14:].strip()
+    id_pdf:str = id_pdf[14:].strip()
     
     if dni_pdf.strip() != dni.upper():
         raise HTTPException(status_code=400, detail=f'El DNI no coincide.')
@@ -304,13 +304,14 @@ def guardar_alumno_verificado(conn, id_alumno: str, dni: str):
     
 def verificar_alumno(conn, id_alumno: str, dni: str) -> bool:
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
-
+    
     cur = conn.cursor()
     cur.execute("""
         SELECT 1 
         FROM ALUMNOS_VERIFICADOS
-        WHERE CODIGOALUM = :id_alumno AND DNI_HASH = :dni_hash
+        WHERE CODIGOALUM = :id_alumno AND TRIM(DNI_HASH) = :dni_hash
     """, id_alumno=id_alumno, dni_hash=dni_hash)
+
 
     return cur.fetchone() is not None
 

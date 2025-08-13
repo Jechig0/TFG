@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 import oracledb
 import pandas as pd
 import funciones as funciones
+from models.VerificarAlumnoPayload import VerificarAlumnoPayload
 
 #Creamos el router para las rutas de alumnos, colocando el prefijo "/alumno" para todas las rutas
 alumnoRouter = APIRouter(prefix="/alumno", tags=["Alumno"])
@@ -70,7 +71,9 @@ def get_afinidad(alumnoId: str, asignatura: str, request: Request):
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
 
 @alumnoRouter.post("/verificar")
-def verificar_alumno(id_alumno: str, dni: str, request:Request):
+def verificar_alumno(payload: VerificarAlumnoPayload, request:Request):
+    id_alumno = payload.id_alumno
+    dni = payload.dni
     if not id_alumno or not dni:
         raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
     pool = request.app.state.pool
