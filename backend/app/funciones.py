@@ -301,6 +301,18 @@ def guardar_alumno_verificado(conn, id_alumno: str, dni: str):
     """, id_alumno=id_alumno, dni_hash=dni_hash)
     conn.commit()
     return True
+
+def existe_alumno(conn:oracledb.Connection, id_alumno:str, dni:str) -> bool:
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 1 
+        FROM ALUMNOS_VERIFICADOS
+        WHERE CODIGOALUM = :id_alumno
+    """, id_alumno=id_alumno)
+
+
+    return cur.fetchone() is not None
+    
     
 def verificar_alumno(conn, id_alumno: str, dni: str) -> bool:
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
