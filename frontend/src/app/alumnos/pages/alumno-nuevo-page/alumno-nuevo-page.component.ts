@@ -6,10 +6,11 @@ import { SubirFicheroComponent } from "../../components/subir-fichero/subir-fich
 import { AsignaturaNota } from '@/alumnos/interfaces/pdfresponse.interface';
 import { ActivatedRoute } from '@angular/router';
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
+import { TablaNotasComponent } from "@/alumnos/components/tabla-notas/tabla-notas.component";
 
 @Component({
   selector: 'alumno-nuevo-page',
-  imports: [ListaAsignaturasComponent, FormsModule, NgClass, SubirFicheroComponent],
+  imports: [ListaAsignaturasComponent, FormsModule, SubirFicheroComponent, TablaNotasComponent],
   templateUrl: './alumno-nuevo-page.component.html',
 })
 export class AlumnoNuevoPageComponent implements AfterViewInit { 

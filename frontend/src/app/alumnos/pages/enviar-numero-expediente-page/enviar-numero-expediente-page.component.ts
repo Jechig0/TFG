@@ -49,26 +49,30 @@ export class EnviarNumeroExpedienteComponent {
     });
 
     // Consulta al backend
-    this.alumnosService.getAlumnoById(codigoLimpio).subscribe({
+    this.alumnosService.verificarAlumno(codigoLimpio, dniLimpio).subscribe({
       next: (res) => {
-        Swal.close(); // Cerrar animación
-
-        this.alumnosService.verificarAlumno(codigoLimpio, dniLimpio).subscribe({
-          next: (existe) => {
-            if (res && res.length > 0 && existe.existe) {
-              this.router.navigate([`/alumno/${codigoLimpio}`]);
-        }   else {
-              this.router.navigate([`/nuevo-alumno/${codigoLimpio}`]);
-        }
-          }
-        })
-
-      },
-      error: () => {
-        Swal.close(); // Cerrar animación
-        // Si no encuentra registros, ir a nuevo alumno
-        this.router.navigate([`/nuevo-alumno/${codigoLimpio}`]);
-      }
+    Swal.close();
+    if (res.estado === 'existente') {
+      this.router.navigate([`/alumno/${codigoLimpio}`]);
+    } else if (res.estado === 'nuevo') {
+      this.router.navigate([`/nuevo-alumno/${codigoLimpio}`]);
+    } else if (res.estado === 'dni_incorrecto') {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'El DNI introducido no coincide con el registrado.',
+      });
+    }
+  },
+  error: () => {
+    Swal.close();
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo verificar el alumno.',
     });
+  }
+});
+
   }
 }

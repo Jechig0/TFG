@@ -71,19 +71,29 @@ def get_afinidad(alumnoId: str, asignatura: str, request: Request):
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
 
 @alumnoRouter.post("/verificar")
-def verificar_alumno(payload: VerificarAlumnoPayload, request:Request):
-    id_alumno = payload.id_alumno
-    dni = payload.dni
+def verificar_alumno(payload: VerificarAlumnoPayload, request: Request):
+    id_alumno = payload.id_alumno.strip()
+    dni = payload.dni.strip().upper()
+    
     if not id_alumno or not dni:
         raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
+
     pool = request.app.state.pool
     with pool.acquire() as conn:
-        try:
-            existe = funciones.verificar_alumno(conn, id_alumno, dni)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error en la base de datos: {str(e)}")
+        # 1. Comprobar si el alumno está en ALUMNOS_VERIFICADOS
+        fila = funciones.existe_alumno(conn, id_alumno, dni)
 
-    return JSONResponse(status_code=200, content=jsonable_encoder({"existe": existe}))
+        if not fila:
+            return {"estado": "nuevo"}  # No está registrado aún
+
+        valido = funciones.verificar_alumno(conn, id_alumno, dni)
+
+        if not valido:
+            return {"estado": "dni_incorrecto"}  # Está registrado pero el DNI no coincide
+
+        # 2. Comprobar si tiene notas en informes_alumno
+        return {"estado": "existente"}  # Tiene notas y el DNI es correcto
+
 
 @alumnoRouter.post("/{id}/subir-informe")
 async def procesar_pdf(id: str, request: Request ,file: UploadFile = File(...)):

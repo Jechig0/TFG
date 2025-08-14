@@ -47,11 +47,14 @@ export class AlumnosService {
   );
   }
 
-  verificarAlumno(id: string, dni:string): Observable<{existe: boolean}>{
-    return this.http.post<{existe: boolean}>(`${this.apiUrl}/verificar`, {
-    id_alumno: id,
-    dni: dni
-  });
+  verificarAlumno(id: string, dni:string): Observable<{estado: string}>{
+    const res = JSON.stringify({"id_alumno":id, "dni": dni})
+    console.log(id, dni)
+    return this.http.post<{estado: string}>(`${this.apiUrl}/alumno/verificar`, {
+    id_alumno: id.trim(),
+    dni: dni.trim().toUpperCase()
+});
+
 
   }
 

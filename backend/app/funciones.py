@@ -311,10 +311,10 @@ def existe_alumno(conn:oracledb.Connection, id_alumno:str, dni:str) -> bool:
     """, id_alumno=id_alumno)
 
 
-    return cur.fetchone() is not None
+    return cur.fetchone()
     
     
-def verificar_alumno(conn, id_alumno: str, dni: str) -> bool:
+def verificar_alumno(conn:oracledb.Connection, id_alumno: str, dni: str) -> bool:
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
     
     cur = conn.cursor()
