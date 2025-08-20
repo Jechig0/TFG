@@ -4,6 +4,7 @@ import {rxResource, toSignal} from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TablaNotasComponent } from "../../components/tabla-notas/tabla-notas.component";
 import { ListaAsignaturasComponent } from "../../components/lista-asignaturas/lista-asignaturas.component";
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-alumno-page',
@@ -33,4 +34,30 @@ export class AlumnoPageComponent {
     this.router.navigate(['/nuevo-alumno'])
   }
 
+  actualizarExpediente() {
+    this.router.navigate([`/nuevo-alumno/${this.alumnoId}`]);
+  }
+
+  borrarExpediente() {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: `Se eliminará el expediente del alumno ${this.alumnoId}`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.alumnosService.eliminarAlumno(this.alumnoId).subscribe({
+          next: () => {
+            Swal.fire('Eliminado', 'El expediente ha sido borrado correctamente.', 'success');
+            this.router.navigate(['/']); // Redirige al inicio
+          },
+          error: (err) => {
+            Swal.fire('Error', err.error?.detail || 'No se pudo borrar el expediente.', 'error');
+          }
+        });
+      }
+    });
+  }
 }

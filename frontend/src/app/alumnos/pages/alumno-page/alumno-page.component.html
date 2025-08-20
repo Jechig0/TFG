@@ -15,6 +15,16 @@
 <button class="btn btn-info" (click)="mostrarTabla.set(!mostrarTabla())">
     {{ mostrarTabla() ? 'Ocultar notas' : 'Ver notas' }}
 </button>
+
+<button class="btn btn-warning" (click)="actualizarExpediente()">
+  Actualizar expediente
+</button>
+
+<button class="btn btn-error" (click)="borrarExpediente()">
+  Borrar expediente
+</button>
+
+
 <div class="grid grid-cols-2 gap-3 w-full h-full">
     <div>
         @if (alumnoResource.hasValue() && mostrarTabla()) {

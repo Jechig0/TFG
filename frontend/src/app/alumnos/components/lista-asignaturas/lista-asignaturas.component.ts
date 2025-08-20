@@ -49,7 +49,7 @@ export class ListaAsignaturasComponent {
 
   async probabilidadAcceso(asignatura: string) {
   this.probabilidadAccesoSignal.set(null);
-  const probabilidad = await firstValueFrom(
+  let probabilidad = await firstValueFrom(
     this.alumnosService.getProbabilidadAcceso(this.alumnoId, asignatura)
   );
   this.probabilidadAccesoSignal.set(probabilidad);

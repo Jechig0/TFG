@@ -6,6 +6,7 @@ import os
 import tempfile
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
+from fastapi.params import Form
 from fastapi.responses import JSONResponse
 import oracledb
 import pandas as pd
@@ -57,17 +58,42 @@ def get_probabilidad_acceso(alumnoId: str, asignatura: str, request: Request):
 
 @alumnoRouter.get("/afinidad/{alumnoId}/{asignatura}", tags=['Afinidad'])
 def get_afinidad(alumnoId: str, asignatura: str, request: Request):
+    # Objetos ya cargados en startup
+    modelo = request.app.state.modelo
+    scaler = request.app.state.scaler
+    matriz = request.app.state.matriz         # matriz (pivot) del entreno
+    df_clusters = request.app.state.df_clusters
+    df_original = request.app.state.df        # df "largo" del entreno (CODIGOALUM, NOMBREASIGNATURA, NUM_CALIFICACIÓN)
+
+    # 1) Vector 1×N del alumno con columnas=matriz.columns
     pool = request.app.state.pool
-    df = request.app.state.df
     with pool.acquire() as conn:
-        df_ampliado = funciones.agregar_alumno_df(df, alumnoId, conn)
-    modelo, scaler, matriz, df_clusters = funciones.entrenar_clustering(df_ampliado)
-    afinidad = funciones.predecir_afinidad_cluster(alumnoId, asignatura, modelo, scaler, matriz, df_clusters, df_ampliado)
-    if (afinidad is None):
-        raise HTTPException(status_code=400, detail="No se ha encontrado al alumno")
+        alumno_row = funciones.obtener_vector_alumno(conn, alumnoId, list(matriz.columns))
+
+    if alumno_row.empty:
+        # No hay notas del alumno en informes_alumno
+        raise HTTPException(status_code=400, detail="No se encontraron notas para el alumno")
+
+    # 2) Calcular afinidad usando el modelo existente + vector del alumno
+    afinidad = funciones.predecir_afinidad_cluster(
+        alumno_id=alumnoId,
+        asignatura=asignatura,
+        modelo=modelo,
+        scaler=scaler,
+        matriz_base=matriz,
+        df_clusters=df_clusters,
+        df_original=df_original,
+        alumno_row=alumno_row,      # ← importante
+    )
+
+    if afinidad is None:
+        raise HTTPException(status_code=400, detail="Asignatura no vista en el entrenamiento o datos insuficientes")
+
+    # 3) (Opcional) Guardar en ADMIN_INFO con el nombre original de la asignatura
     with pool.acquire() as conn:
-        asignatura_estandar = funciones.obtener_asignatura_sin_normalizar(conn, asignatura) 
+        asignatura_estandar = funciones.obtener_asignatura_sin_normalizar(conn, asignatura)
         funciones.insertar_afinidad_alumno(conn, alumnoId, asignatura_estandar, afinidad)
+
     return JSONResponse(status_code=200, content=jsonable_encoder(afinidad))
 
 @alumnoRouter.post("/verificar")
@@ -95,26 +121,32 @@ def verificar_alumno(payload: VerificarAlumnoPayload, request: Request):
         return {"estado": "existente"}  # Tiene notas y el DNI es correcto
 
 
-@alumnoRouter.post("/{id}/subir-informe")
-async def procesar_pdf(id: str, request: Request ,file: UploadFile = File(...)):
+@alumnoRouter.post("/{id}/subir-informe") #TODO: Error con el insertar_informe_alumno al cambiarlo a MERGE. Cambio para que no se borre de alumnos_verificados
+async def procesar_pdf(
+    id: str,
+    request: Request,
+    file: UploadFile = File(...),
+    dni: str = Form(...)
+):
     funciones.validar_pdf(file)
     pool = request.app.state.pool
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
         temp_pdf.write(await file.read())
         temp_pdf_path = temp_pdf.name
+
     with pool.acquire() as conn:
-        tablas_finales = funciones.procesar_pdf(conn, temp_pdf_path, id=id, dni='0860B')
-        # Borramos el informe anterior del alumno si existe para evitar duplicados, considerando que
-        # si se sube un nuevo informe, tendrá información actualizada.
-        funciones.borrar_informe_alumno(conn, id)
+        tablas_finales = funciones.procesar_pdf(conn, temp_pdf_path, id=id, dni=dni)
         funciones.insertar_informe_alumno(conn, id, tablas_finales)
         resultado = funciones.obtener_informe_alumno(conn, id)
-    
+
     os.remove(temp_pdf_path)
-    if resultado is None or len(resultado) == 0:
-        raise HTTPException(status_code=400, detail={"No se encontraron asignaturas con notas en el PDF proporcionado."})
-    
+
+    if not resultado:
+        raise HTTPException(status_code=400, detail="No se encontraron asignaturas con notas en el PDF.")
+
     return JSONResponse(status_code=201, content=jsonable_encoder(resultado))
+
 
 @alumnoRouter.delete("/delete/{id}")
 def borrar_alumno(id: str, request: Request):

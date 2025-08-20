@@ -105,7 +105,15 @@ WHERE rn = 1"""
     df = pd.read_sql(sql, conn)
     return df
 
-def agregar_alumno_df(df: pd.DataFrame, codigo_alumno: str, conn: oracledb.Connection):
+def obtener_vector_alumno(
+    conn: oracledb.Connection, 
+    codigo_alumno: str, 
+    columnas_matriz_base: list[str]
+) -> pd.DataFrame:
+    """
+    Devuelve un DataFrame de 1 fila (index=CODIGOALUM) y columnas=columnas_matriz_base,
+    con las notas del alumno alineadas a esas columnas. Rellena con 0 las que falten.
+    """
     sql = """
     SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
     FROM (
@@ -125,10 +133,34 @@ def agregar_alumno_df(df: pd.DataFrame, codigo_alumno: str, conn: oracledb.Conne
     )
     WHERE rn = 1
     """
+
     df_alumno = pd.read_sql(sql, conn, params={"codigo_alumno": codigo_alumno})
-    df_completo = pd.concat([df, df_alumno], ignore_index=True)
-    
-    return df_completo
+
+    # Si no hay filas, no hay notas en informes_alumno
+    if df_alumno.empty:
+        return pd.DataFrame()
+
+    # NUM_CALIFICACIÓN puede venir como '7,5' (coma). Conviértelo a float de forma robusta
+    df_alumno["NUM_CALIFICACIÓN"] = (
+        df_alumno["NUM_CALIFICACIÓN"]
+        .astype(str)
+        .str.replace(",", ".", regex=False)
+        .apply(lambda x: pd.to_numeric(x, errors="coerce"))
+    )
+
+    # Pivot (1×N)
+    alumno_row = df_alumno.pivot_table(
+        index="CODIGOALUM",
+        columns="NOMBREASIGNATURA",
+        values="NUM_CALIFICACIÓN",
+        aggfunc="max"
+    ).fillna(0.0)
+
+    # Alinear columnas con la matriz base (todas las asignaturas del entreno)
+    alumno_row = alumno_row.reindex(columns=columnas_matriz_base, fill_value=0.0)
+
+    return alumno_row
+
  
 def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     # Crear matriz alumno-asignatura
@@ -148,27 +180,68 @@ def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     
     return modelo, scaler, matriz, df_clusters
 
-def predecir_afinidad_cluster(alumno_id:str, asignatura:str, modelo:KMeans, scaler:StandardScaler, matriz:pd.DataFrame, df_clusters:pd.DataFrame, df_original:pd.DataFrame):
-    if alumno_id not in matriz.index or asignatura not in matriz.columns:
+def predecir_afinidad_cluster(
+    alumno_id: str,
+    asignatura: str,
+    modelo: KMeans,
+    scaler: StandardScaler,
+    matriz_base: pd.DataFrame,
+    df_clusters: pd.DataFrame,
+    df_original: pd.DataFrame,
+    alumno_row: pd.DataFrame | None = None,   # NUEVO: vector 1×N del alumno
+) -> float | None:
+    """
+    Calcula la afinidad como media de notas del cluster del alumno en esa asignatura, escalada/normalizada.
+    - Si alumno_row es None, intenta buscar al alumno en la matriz_base.
+    - Devuelve None si la asignatura no existe en la matriz base (no vista en entrenamiento).
+    """
+
+    # Normaliza el nombre de asignatura como en el entreno (sin espacios)
+    asignatura_norm = str(asignatura).replace(" ", "")
+
+    # La asignatura debe existir en las columnas del modelo (vistas en el entreno)
+    if asignatura_norm not in matriz_base.columns:
         return None
-    
-    alumno_vector = scaler.transform(matriz.loc[[alumno_id]])
-    cluster_id = modelo.predict(alumno_vector)[0]
-    
-    # Alumnos en ese cluster
-    alumnos_similares = df_clusters[df_clusters['cluster'] == cluster_id]['CODIGOALUM']
-    
-    # Notas en la asignatura de ese grupo
+
+    # 1) Conseguir vector escalado del alumno
+    if alumno_row is not None:
+        # Asegurar mismo orden de columnas
+        alumno_row = alumno_row.reindex(columns=matriz_base.columns, fill_value=0.0)
+        alumno_vector_scaled = scaler.transform(alumno_row)
+    else:
+        # Usar fila existente del entreno (si el alumno ya estaba ahí)
+        if alumno_id not in matriz_base.index:
+            return None
+        alumno_vector_scaled = scaler.transform(matriz_base.loc[[alumno_id]])
+
+    # 2) Cluster del alumno
+    cluster_id = modelo.predict(alumno_vector_scaled)[0]
+
+    # 3) Alumnos en ese cluster (del entreno)
+    alumnos_similares = df_clusters.loc[df_clusters["cluster"] == cluster_id, "CODIGOALUM"]
+
+    # 4) Notas de esos alumnos en la asignatura en el df original (no pivot)
     notas = df_original[
-        (df_original['CODIGOALUM'].isin(alumnos_similares)) &
-        (df_original['NOMBREASIGNATURA'] == asignatura) &
-        (df_original['NUM_CALIFICACIÓN'].notnull())
-    ]['NUM_CALIFICACIÓN'].astype(float)
-    
+        (df_original["CODIGOALUM"].isin(alumnos_similares)) &
+        (df_original["NOMBREASIGNATURA"] == asignatura_norm) &
+        (df_original["NUM_CALIFICACIÓN"].notnull())
+    ]["NUM_CALIFICACIÓN"]
+
+    # A float robusto
+    notas = (
+        notas.astype(str)
+        .str.replace(",", ".", regex=False)
+        .apply(lambda x: pd.to_numeric(x, errors="coerce"))
+        .dropna()
+    )
+
     if notas.empty:
         return 0.0
-    
-    return round(notas.mean() / 10, 3)
+
+    # Escala 0-1 como media/10
+    afinidad = float(notas.mean()) / 10.0
+    return round(afinidad, 3)
+
 
 #Saco del PDF todas las notas, el DNI y el número de expediente del alumno.
 def extraer_tablas(pdf_path):
@@ -258,36 +331,41 @@ def limpiar_tablas_finales(tablas):
 
     return tablas_limpias
 
-def procesar_pdf(conn:oracledb.Connection, pdf_path, id:str, dni:str):
+def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
     if not id or not dni:
-        raise HTTPException(status_code=400, detail='El ID o el DNI proporcionados no coinciden con el que figura en el expediente.')
+        raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
+
     tablas, dni_pdf, id_pdf = extraer_tablas(pdf_path)
-    dni_pdf:str = dni_pdf[14:].strip()
-    id_pdf:str = id_pdf[14:].strip()
-    
-    if dni_pdf.strip() != dni.upper():
-        raise HTTPException(status_code=400, detail=f'El DNI no coincide.')
-    
-    if id_pdf.strip() != id.upper():
-        raise HTTPException(status_code=400, detail=f'El ID no coincide.')
-    tablas_procesadas = []
-    ultima_asignatura = None
-    
+    dni_pdf = dni_pdf[14:].strip().upper()
+    id_pdf = id_pdf[14:].strip()
+
+    # Comparar con lo que vino del frontend
+    if dni.strip().upper() != dni_pdf:
+        raise HTTPException(status_code=400, detail="El DNI no coincide con el PDF")
+    if id.strip().upper() != id_pdf:
+        raise HTTPException(status_code=400, detail="El ID no coincide con el PDF")
+
+    # ✅ Guardar alumno como verificado
     guardar_alumno_verificado(conn, id_pdf, dni_pdf)
 
+    # Procesar asignaturas del PDF
+    tablas_procesadas = []
+    ultima_asignatura = None
     for tabla in tablas:
         if not tabla:
             continue
         tabla_limpia, ultima_asignatura = limpiar_tabla(tabla, ultima_asignatura)
         tablas_procesadas.append(tabla_limpia)
-    tablas_finales = limpiar_tablas_finales(tablas_procesadas)
 
-    
+    tablas_finales = limpiar_tablas_finales(tablas_procesadas)
     return tablas_finales
 
-def guardar_alumno_verificado(conn, id_alumno: str, dni: str):
+
+def guardar_alumno_verificado(conn:oracledb.Connection, id_alumno: str, dni: str):
     # Crear hash del DNI en mayúsculas y sin espacios
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
+    print(f"[DEBUG] Guardando en ALUMNOS_VERIFICADOS → {id_alumno=} {dni=} {dni_hash=}")
+
     
     cur = conn.cursor()
     cur.execute("""
@@ -299,6 +377,8 @@ def guardar_alumno_verificado(conn, id_alumno: str, dni: str):
         WHEN NOT MATCHED THEN
             INSERT (CODIGOALUM, DNI_HASH) VALUES (src.CODIGOALUM, src.DNI_HASH)
     """, id_alumno=id_alumno, dni_hash=dni_hash)
+    print(f"[DEBUG] Filas afectadas: {cur.rowcount}")
+
     conn.commit()
     return True
 
@@ -370,19 +450,42 @@ def insertar_informe_alumno(conn: oracledb.Connection, codigoalum: str, tablas_f
             try:
                 nota_num = float(fila[4])
             except (ValueError, TypeError):
-                nota_num = None  # o salta esta fila si es inválida
+                nota_num = None
 
             try:
                 creditos_num = float(fila[1])
             except (ValueError, TypeError):
-                creditos_num = None  # lo mismo
+                creditos_num = None
+
             cur.execute("""
-                INSERT INTO informes_alumno
-                (
-                CODIGOALUM, NOMBREASIGNATURA, CREDITOS, CURSO_ACADÉMICO,
-                CONVOCATORIA, NUM_CALIFICACIÓN, CALIFICACIÓN
-                ) VALUES (:1, :2, :3, :4, :5, :6, :7)
-""", (codigoalum, fila[0], creditos_num, fila[2], fila[3], nota_num, fila[5]))
+                MERGE INTO informes_alumno dest
+                USING (SELECT :codigoalum AS CODIGOALUM, :nombre AS NOMBREASIGNATURA,
+                              :creditos AS CREDITOS, :curso AS CURSO_ACADEMICO,
+                              :convocatoria AS CONVOCATORIA, :nota AS NUM_CALIFICACIÓN,
+                              :calificacion AS CALIFICACIÓN
+                       FROM dual) src
+                ON (dest.CODIGOALUM = src.CODIGOALUM
+                    AND dest.NOMBREASIGNATURA = src.NOMBREASIGNATURA
+                    AND dest.CURSO_ACADÉMICO = src.CURSO_ACADÉMICO
+                    AND dest.CONVOCATORIA = src.CONVOCATORIA)
+                WHEN MATCHED THEN
+                    UPDATE SET dest.CREDITOS = src.CREDITOS,
+                               dest.NUM_CALIFICACIÓN = src.NUM_CALIFICACIÓN,
+                               dest.CALIFICACIÓN = src.CALIFICACIÓN
+                WHEN NOT MATCHED THEN
+                    INSERT (CODIGOALUM, NOMBREASIGNATURA, CREDITOS, CURSO_ACADÉMICO,
+                            CONVOCATORIA, NUM_CALIFICACIÓN, CALIFICACIÓN)
+                    VALUES (src.CODIGOALUM, src.NOMBREASIGNATURA, src.CREDITOS,
+                            src.CURSO_ACADÉMICO, src.CONVOCATORIA, src.NUM_CALIFICACIÓN, src.CALIFICACIÓN)
+            """, {
+                "codigoalum": codigoalum,
+                "nombre": fila[0],
+                "creditos": creditos_num,
+                "curso": fila[2],
+                "convocatoria": fila[3],
+                "nota": nota_num,
+                "calificacion": fila[5]
+            })
     conn.commit()
     cur.close()
     return True
@@ -390,9 +493,11 @@ def insertar_informe_alumno(conn: oracledb.Connection, codigoalum: str, tablas_f
 def obtener_informe_alumno(conn, id):
     cur = conn.cursor()
     cur.execute("""
-                SELECT NOMBREASIGNATURA, NUM_CALIFICACIÓN
-                FROM (
-                    SELECT 
+            SELECT 
+                NOMBREASIGNATURA, 
+                TO_NUMBER(REPLACE(NUM_CALIFICACIÓN, ',', '.'), '999.99') AS NUM_CALIFICACION
+            FROM (
+                SELECT 
                     CODIGOALUM,
                     NOMBREASIGNATURA,
                     NUM_CALIFICACIÓN,
@@ -400,12 +505,11 @@ def obtener_informe_alumno(conn, id):
                         PARTITION BY CODIGOALUM, NOMBREASIGNATURA 
                         ORDER BY NUM_CALIFICACIÓN DESC
                     ) AS rn
-                    FROM informes_alumno
-                    WHERE 
-                        (NOMBREASIGNATURA IS NOT NULL 
-                        OR NUM_CALIFICACIÓN IS NOT NULL)
-                    )
-                WHERE CODIGOALUM = :codigo AND rn = 1
+                FROM informes_alumno
+                WHERE (NOMBREASIGNATURA IS NOT NULL OR NUM_CALIFICACIÓN IS NOT NULL)
+            )
+            WHERE CODIGOALUM = :codigo AND rn = 1
+
                     """, codigo = id)
     
     resultado = cur.fetchall()
@@ -422,10 +526,12 @@ def borrar_informe_alumno(conn: oracledb.Connection, id: str):
         DELETE FROM informes_alumno
         WHERE CODIGOALUM = :codigo
     """, codigo=id)
+    cur.execute(""" 
+        DELETE FROM ALUMNOS_VERIFICADOS
+        WHERE CODIGOALUM = :codigo
+    """, codigo=id)
     conn.commit()
     cur.close()
-    
-    return True
 
 def obtener_optativas_por_titulacion(id: str, conn: oracledb.Connection):
     titulacion_id = id[:4]

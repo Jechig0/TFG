@@ -72,7 +72,15 @@ export class AlumnosService {
     return this.http.get<number>(`${this.apiUrl}/alumno/afinidad/${id}/${asignatura}`)
   }
 
-  enviarInformePdf(id:string ,file: FormData): Observable<AsignaturaNota[]> {
-    return this.http.post<AsignaturaNota[]>(`${this.apiUrl}/alumno/${id}/subir-informe`, file)
+  enviarInformePdf(id: string, dni: string, file: File): Observable<AsignaturaNota[]> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('dni', dni);
+
+    return this.http.post<AsignaturaNota[]>(`${this.apiUrl}/alumno/${id}/subir-informe`, formData);
+}
+
+  eliminarAlumno(id:string): Observable<{estado: string}> {
+    return this.http.delete<{estado: string}>(`${this.apiUrl}/alumno/delete/${id}`);
   }
 }

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
+import { AlumnoStateService } from '@/alumnos/services/alumnostate.service';
 
 @Component({
   selector: 'enviar-numero-expediente',
@@ -13,6 +14,7 @@ export class EnviarNumeroExpedienteComponent {
   router = inject(Router);
   http = inject(HttpClient);
   alumnosService = inject(AlumnosService)
+  alumnoStateService = inject(AlumnoStateService);
 
   validarYRedirigir(codigo: string, dni: string) {
     const codigoLimpio = codigo.trim();
@@ -53,8 +55,10 @@ export class EnviarNumeroExpedienteComponent {
       next: (res) => {
     Swal.close();
     if (res.estado === 'existente') {
+      this.alumnoStateService.setAlumno(codigoLimpio, dniLimpio);
       this.router.navigate([`/alumno/${codigoLimpio}`]);
     } else if (res.estado === 'nuevo') {
+      this.alumnoStateService.setAlumno(codigoLimpio, dniLimpio);
       this.router.navigate([`/nuevo-alumno/${codigoLimpio}`]);
     } else if (res.estado === 'dni_incorrecto') {
       Swal.fire({

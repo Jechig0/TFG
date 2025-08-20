@@ -1,0 +1,24 @@
+// alumnos-state.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class AlumnoStateService {
+
+  setAlumno(id: string, dni: string) {
+    sessionStorage.setItem("id_alumno", id.trim());
+    sessionStorage.setItem("dni", dni.toUpperCase().trim());
+  }
+
+  getId(): string | null {
+    return sessionStorage.getItem("id_alumno");
+  }
+
+  getDni(): string | null {
+    return sessionStorage.getItem("dni");
+  }
+
+  clear() {
+    sessionStorage.removeItem("id_alumno");
+    sessionStorage.removeItem("dni");
+  }
+}

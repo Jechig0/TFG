@@ -1,5 +1,6 @@
 #Importaciones necesarias en main.
 from contextlib import asynccontextmanager
+import pandas as pd
 import oracledb as oracledb
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -24,11 +25,23 @@ async def lifespan(app: FastAPI):
     )
     
     app.state.pool = pool
-    app.state.pdf_info = []
 
     # Crear conexión temporal para cargar el DataFrame
     with pool.acquire() as conn:
-        app.state.df = funciones.crear_df(conn)
+        df = funciones.crear_df(conn)
+        df["NUM_CALIFICACIÓN"] = (
+        df["NUM_CALIFICACIÓN"]
+        .astype(str)
+        .str.replace(",", ".", regex=False)
+    )
+        df["NUM_CALIFICACIÓN"] = pd.to_numeric(df["NUM_CALIFICACIÓN"], errors="coerce")
+
+        modelo, scaler, matriz, df_clusters = funciones.entrenar_clustering(df)
+        app.state.df = df
+        app.state.modelo = modelo
+        app.state.scaler = scaler
+        app.state.matriz = matriz
+        app.state.df_clusters = df_clusters
 
     print("✅ Pool creado correctamente")
     yield  # Espera a que la app corra

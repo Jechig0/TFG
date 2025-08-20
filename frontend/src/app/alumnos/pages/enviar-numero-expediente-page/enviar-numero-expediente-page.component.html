@@ -20,6 +20,7 @@
   <button
     class="btn btn-primary w-full"
     (click)="validarYRedirigir(codigoAlumno.value, dni.value)"
+    (keyup.enter)="validarYRedirigir(codigoAlumno.value, dni.value)"
   >
     Acceder
   </button>

@@ -23,6 +23,11 @@ export const routes: Routes = [
     },
 
     {
+        path: 'admin',
+        loadComponent: () => import('./alumnos/pages/admin-page/admin-page.component').then(m => m.AdminPageComponent)
+    },
+
+    {
         path:'**',
         redirectTo: ''
     }
