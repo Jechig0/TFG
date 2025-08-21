@@ -1,6 +1,6 @@
 import { AsignaturaNota } from '@/alumnos/interfaces/pdfresponse.interface';
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
-import { AlumnoStateService } from '@/alumnos/services/alumnostate.service';
+import { AlumnoStateService } from '@/alumnos/services/alumno-state.service';
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';

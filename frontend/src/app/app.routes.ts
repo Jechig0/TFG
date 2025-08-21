@@ -21,10 +21,15 @@ export const routes: Routes = [
         path:'nuevo-alumno/:id',
         loadComponent: () => import('./alumnos/pages/alumno-nuevo-page/alumno-nuevo-page.component').then(m => m.AlumnoNuevoPageComponent)
     },
+    
+    {
+        path: 'admin/login',
+        loadComponent: () => import('./auth/pages/admin-login-page/admin-login-page.component').then(m => m.AdminLoginPageComponent)
+    },
 
     {
         path: 'admin',
-        loadComponent: () => import('./alumnos/pages/admin-page/admin-page.component').then(m => m.AdminPageComponent)
+        loadComponent: () => import('./auth/pages/admin-page/admin-page.component').then(m => m.AdminPageComponent)
     },
 
     {

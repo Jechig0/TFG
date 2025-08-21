@@ -1,3 +1,4 @@
+import { AlumnoStateService } from '@/alumnos/services/alumno-state.service';
 import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -8,6 +9,7 @@ import { Router } from '@angular/router';
 })
 export class MainPageComponent implements OnInit {
   private router = inject(Router);
+  alumnoStateService = inject(AlumnoStateService)
   mensaje = '';
   textoBienvenida = 'Recomendador de Asignaturas';
 
@@ -28,6 +30,10 @@ export class MainPageComponent implements OnInit {
   }
 
   goToIdentificacion() {
-    this.router.navigate(['/alumno']);
+    if(this.alumnoStateService.getId() != null){
+      this.router.navigate([`alumno/${this.alumnoStateService.getId()}`]);
+    } else {
+      this.router.navigate(['/alumno']);
+    }
   }
 }

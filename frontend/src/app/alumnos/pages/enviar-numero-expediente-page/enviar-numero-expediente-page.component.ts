@@ -3,11 +3,13 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
-import { AlumnoStateService } from '@/alumnos/services/alumnostate.service';
+import { AlumnoStateService } from '@/alumnos/services/alumno-state.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'enviar-numero-expediente',
   templateUrl: './enviar-numero-expediente-page.component.html',
+  imports: [FormsModule]
 })
 export class EnviarNumeroExpedienteComponent {
 

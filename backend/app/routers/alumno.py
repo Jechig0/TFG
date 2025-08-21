@@ -110,15 +110,15 @@ def verificar_alumno(payload: VerificarAlumnoPayload, request: Request):
         fila = funciones.existe_alumno(conn, id_alumno, dni)
 
         if not fila:
-            return {"estado": "nuevo"}  # No está registrado aún
+            return JSONResponse(status_code=200, content={"estado": "nuevo"})  # No está registrado aún
 
         valido = funciones.verificar_alumno(conn, id_alumno, dni)
 
         if not valido:
-            return {"estado": "dni_incorrecto"}  # Está registrado pero el DNI no coincide
+            return JSONResponse(status_code=200, content={"estado": "dni_incorrecto"})  # Está registrado pero el DNI no coincide
 
         # 2. Comprobar si tiene notas en informes_alumno
-        return {"estado": "existente"}  # Tiene notas y el DNI es correcto
+        return JSONResponse(status_code=200, content={"estado": "existente"})  # Tiene notas y el DNI es correcto
 
 
 @alumnoRouter.post("/{id}/subir-informe") #TODO: Error con el insertar_informe_alumno al cambiarlo a MERGE. Cambio para que no se borre de alumnos_verificados
@@ -128,6 +128,9 @@ async def procesar_pdf(
     file: UploadFile = File(...),
     dni: str = Form(...)
 ):
+    if not dni:
+        raise HTTPException(status_code=400, detail="El DNI es obligatorio.")
+    
     funciones.validar_pdf(file)
     pool = request.app.state.pool
 
@@ -137,6 +140,7 @@ async def procesar_pdf(
 
     with pool.acquire() as conn:
         tablas_finales = funciones.procesar_pdf(conn, temp_pdf_path, id=id, dni=dni)
+        funciones.borrar_informe_alumno(conn, id)
         funciones.insertar_informe_alumno(conn, id, tablas_finales)
         resultado = funciones.obtener_informe_alumno(conn, id)
 
@@ -153,5 +157,6 @@ def borrar_alumno(id: str, request: Request):
     pool = request.app.state.pool
     with pool.acquire() as conn:
         funciones.borrar_informe_alumno(conn, id)
+        funciones.borrar_alumno_verificado(conn, id)
     
     return JSONResponse(status_code=200, content={"message": f"Alumno con ID {id} borrado exitosamente."})

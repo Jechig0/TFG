@@ -8,21 +8,17 @@ GENERAL
 -Avanzar la memoria
 
 FRONTEND
--Trabajar creación manual de alumnos (notas manuales)
--Para alumno nuevo: si hay ya notas en el backend, que se muestren correctamente
--Añadir almacenamiento en caché para no tener que pedir otra vez el pdf al recargar.
+-Usar sessionStorage para agilizar procesos.
+-Navbar: revisar routerlinkActive, no funciona correctamente.
+-Admin Login: Arreglar el HTML.
+-Admin Dashboard: Añadir la visualización de los datos.
+-Crear guardias de las rutas.
 
 BACKEND
--Arreglar lectura PDF (falla si una asignatura tiene calificaciones en dos páginas distintas)
--Optimizar rendimiento de endpoint probabilidadAcceso.
 -Revisar precisión endpoint afinidad.
--Revisar excepciones endpoints probabilidadAcceso y afinidad.
 -Trabajar muestras de precisión del cluster
 
 REUNION
--Protección de datos con últimos digitos del DNI.
--Mensaje error: "No existen datos históricos de calificación de esta asignatura" para asignaturas recién ofertadas.
--Boton borrado de datos.
 -Dashboard administrador.
 -Apendices: Manual de instalación y manual de usuario.
 -Para el admin dashboard: titulación que más solicita, asignatura más consultada, asignatura con afinidades más altas, asignatura con mayor probabilidad de acceso.

@@ -1,15 +1,73 @@
-<div class="navbar bg-base-100 shadow-sm">
+<nav class="navbar bg-base-100 shadow-sm px-4 py-2 relative">
+  <!-- Botón hamburguesa (solo móvil) -->
   <div class="flex-none">
-    <button class="btn btn-square btn-ghost">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block h-5 w-5 stroke-current"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg>
+    <button
+      class="btn btn-square btn-ghost md:hidden"
+      (click)="toggleMobileMenu()"
+      [attr.aria-expanded]="mobileMenuOpen()"
+      aria-label="Abrir menú"
+      type="button"
+    >
+      <!-- icono hamburguesa -->
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+           class="inline-block h-5 w-5 stroke-current">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
     </button>
   </div>
-  <div class="flex-1">
-    <a class="btn btn-ghost text-xl">daisyUI</a>
-  </div>
-  <div class="flex-none">
-    <button class="btn btn-square btn-ghost">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block h-5 w-5 stroke-current"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path> </svg>
-    </button>
-  </div>
+
+<!-- Logo / título -->
+<div class="flex-1 flex items-center">
+  <a class="btn btn-ghost normal-case text-xl flex items-center" (click)="this.router.navigate(['/'])">
+    <!-- Logo UMA -->
+    <img 
+      src="assets/uma.jpg" 
+      alt="Logo Universidad" 
+      class="h-14 mr-2 inline-block sm:inline" 
+    />
+    <!-- Texto Universidad -->
+    <span class="align-middle hidden md:inline">Universidad de Málaga</span>
+  </a>
 </div>
+
+<!-- Título de la página -->
+<div class="flex-2 text-center align-middle">
+  <span class="text-xl hidden lg:inline">Recomendador de Asignaturas</span>
+</div>
+
+
+
+  <!-- Menú desktop -->
+  <div class="hidden md:flex flex-none items-center space-x-2">
+    <a class="btn btn-ghost" routerLink="/" routerLinkActive="btn-active" (click)="this.router.navigate(['/'])">Inicio</a>
+    <a class="btn btn-ghost" routerLink="/alumno" routerLinkActive="btn-active" (click)="this.goToAlumnoPage()">Alumno</a>
+    <!-- Login admin (visible siempre) -->
+    <button class="btn btn-outline" (click)="goToAdminLogin()">Login Admin</button>
+
+    <!-- Panel admin (solo si isAdmin) -->
+    @if (isAdmin()) {
+      <a class="btn btn-primary" routerLink="/admin" (click)="this.router.navigate(['/admin'])">Panel Admin</a>
+    }
+    
+  </div>
+
+  <!-- Móvil: panel desplegable -->
+  <div class="md:hidden">
+    @if (mobileMenuOpen()) {
+      <div class="absolute left-2 right-2 top-16 bg-base-100 rounded-lg shadow-lg p-4 z-50">
+      <nav class="flex flex-col space-y-2">
+        <a class="py-2 px-3 rounded hover:bg-gray-100" routerLink="/home" (click)="closeMobileMenu()">Inicio</a>
+        <a class="py-2 px-3 rounded hover:bg-gray-100" routerLink="/carreras" (click)="closeMobileMenu()">Carreras</a>
+        <button class="py-2 px-3 text-left rounded hover:bg-gray-100" (click)="goToAdminLogin(); closeMobileMenu()">Login Admin</button>
+
+        <!-- panel admin solo si isAdmin -->
+        @if (isAdmin()) {
+          <a class="py-2 px-3 rounded btn btn-sm btn-primary" routerLink="/admin/panel" (click)="closeMobileMenu()">Panel Admin</a>
+        }
+      </nav>
+    </div>
+    }
+
+  </div>
+</nav>

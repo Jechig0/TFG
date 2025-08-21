@@ -3,6 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '@environments/environment';
 import { map, Observable, of, tap } from 'rxjs';
 import { AsignaturaNota } from '../interfaces/pdfresponse.interface';
+import { AlumnoStateService } from './alumno-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,7 @@ export class AlumnosService {
   apiUrl = environment.apiUrl
 
   private http = inject(HttpClient)
+  alumnoStateService = inject(AlumnoStateService);
 
   alumnos = signal<Record<string, [string, number][]>>({});
   mediaAlumnos = signal<Record<string, string>>({});
@@ -81,6 +83,7 @@ export class AlumnosService {
 }
 
   eliminarAlumno(id:string): Observable<{estado: string}> {
+    this.alumnoStateService.clear();
     return this.http.delete<{estado: string}>(`${this.apiUrl}/alumno/delete/${id}`);
   }
 }

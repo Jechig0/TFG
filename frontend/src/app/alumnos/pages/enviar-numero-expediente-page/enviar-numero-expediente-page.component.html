@@ -1,4 +1,7 @@
-<div class="form-control w-full max-w-xs space-y-3 text-center items-center">
+<form
+  class="form-control w-full max-w-xs space-y-3 text-center items-center"
+  (ngSubmit)="validarYRedirigir(codigoAlumno.value, dni.value)"
+>
 
   <!-- Código alumno -->
   <input
@@ -17,12 +20,8 @@
   />
 
   <!-- Botón -->
-  <button
-    class="btn btn-primary w-full"
-    (click)="validarYRedirigir(codigoAlumno.value, dni.value)"
-    (keyup.enter)="validarYRedirigir(codigoAlumno.value, dni.value)"
-  >
+  <button type="submit" class="btn btn-primary w-full">
     Acceder
   </button>
 
-</div>
+</form>

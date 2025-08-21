@@ -64,6 +64,12 @@ def calcular_nota_corte(cur, nombre_asignatura):
     return nota_corte_por_año  # Dict: { "2018-19": 6.25, "2019-20": 5.8, ... }
 
 def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
+    media = calcular_media_ponderada_alumno(cur, codigo_alumno)[0]
+    if media is None:
+        raise HTTPException(status_code=400, detail=f"No se ha podido calcular la media del alumno {codigo_alumno}")
+    if media >=4:
+        return 1
+    
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     if not notas_corte or len(notas_corte) == 0:
@@ -71,10 +77,6 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
 
     total = len(notas_corte)
     supera = 0
-    
-    media = calcular_media_ponderada_alumno(cur, codigo_alumno)[0]
-    if media is None:
-        raise HTTPException(status_code=400, detail=f"No se ha podido calcular la media del alumno {codigo_alumno}")
     
     for curso_acad, nota_corte in notas_corte.items():
         if media > nota_corte: 
@@ -466,17 +468,17 @@ def insertar_informe_alumno(conn: oracledb.Connection, codigoalum: str, tablas_f
                        FROM dual) src
                 ON (dest.CODIGOALUM = src.CODIGOALUM
                     AND dest.NOMBREASIGNATURA = src.NOMBREASIGNATURA
-                    AND dest.CURSO_ACADÉMICO = src.CURSO_ACADÉMICO
+                    AND dest.CURSO_ACADEMICO = src.CURSO_ACADEMICO
                     AND dest.CONVOCATORIA = src.CONVOCATORIA)
                 WHEN MATCHED THEN
                     UPDATE SET dest.CREDITOS = src.CREDITOS,
                                dest.NUM_CALIFICACIÓN = src.NUM_CALIFICACIÓN,
                                dest.CALIFICACIÓN = src.CALIFICACIÓN
                 WHEN NOT MATCHED THEN
-                    INSERT (CODIGOALUM, NOMBREASIGNATURA, CREDITOS, CURSO_ACADÉMICO,
+                    INSERT (CODIGOALUM, NOMBREASIGNATURA, CREDITOS, CURSO_ACADEMICO,
                             CONVOCATORIA, NUM_CALIFICACIÓN, CALIFICACIÓN)
                     VALUES (src.CODIGOALUM, src.NOMBREASIGNATURA, src.CREDITOS,
-                            src.CURSO_ACADÉMICO, src.CONVOCATORIA, src.NUM_CALIFICACIÓN, src.CALIFICACIÓN)
+                            src.CURSO_ACADEMICO, src.CONVOCATORIA, src.NUM_CALIFICACIÓN, src.CALIFICACIÓN)
             """, {
                 "codigoalum": codigoalum,
                 "nombre": fila[0],
@@ -526,7 +528,12 @@ def borrar_informe_alumno(conn: oracledb.Connection, id: str):
         DELETE FROM informes_alumno
         WHERE CODIGOALUM = :codigo
     """, codigo=id)
-    cur.execute(""" 
+    conn.commit()
+    cur.close()
+    
+def borrar_alumno_verificado(conn:oracledb.Connection, id: str):
+    cur = conn.cursor()
+    cur.execute("""
         DELETE FROM ALUMNOS_VERIFICADOS
         WHERE CODIGOALUM = :codigo
     """, codigo=id)
