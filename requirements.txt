@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+oracledb
+pandas
+scikit-learn
+pdfplumber
+python-multipart
+pydantic

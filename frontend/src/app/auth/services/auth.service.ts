@@ -1,20 +1,36 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { environment } from '@environments/environment';
+import { map, Observable, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  // true si el usuario está autenticado como admin
-  private isAdminSubject = new BehaviorSubject<boolean>(false);
-  isAdmin$ = this.isAdminSubject.asObservable();
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl
+  private _isAdmin = signal<boolean>(false);
 
-  // Llamar al hacer login admin real
-  setAdmin(value: boolean) {
-    this.isAdminSubject.next(value);
-  }
+  isAdmin = computed(() => this._isAdmin());
 
-  // ejemplo: log out
-  logout() {
-    this.isAdminSubject.next(false);
+  login(usuario: string, password: string): Observable<string> {
+    const formData = new FormData();
+    formData.append('user', usuario);
+    formData.append('password', password);
+
+    return this.http.post<{ message: string }>(`${this.apiUrl}/admin/check`, {
+      user: usuario,
+      password: password
+    }).pipe(
+      map(response => response.message),
+      tap(response => {
+        if (response === "Usuario autorizado") {
+          this._isAdmin.set(true);
+        }
+        else {
+          this._isAdmin.set(false);
+        }
+      })
+    );
+
   }
 }

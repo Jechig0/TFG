@@ -1,7 +1,12 @@
-<form
-  class="form-control w-full max-w-xs space-y-3 text-center items-center"
-  (ngSubmit)="validarYRedirigir(codigoAlumno.value, dni.value)"
->
+<div class="flex min-h-screen items-center justify-center bg-base-300">
+  <div class="card w-full max-w-md shadow-2xl bg-base-100">
+    <div class="card-body">
+      <h2 class="card-title justify-center">Login</h2>
+
+      <form
+      class="form-control w-full max-w-xs space-y-3 text-center items-center"
+      (ngSubmit)="validarYRedirigir(codigoAlumno.value, dni.value)"
+  >
 
   <!-- Código alumno -->
   <input
@@ -24,4 +29,7 @@
     Acceder
   </button>
 
-</form>
+      </form>
+    </div>
+  </div>
+</div>

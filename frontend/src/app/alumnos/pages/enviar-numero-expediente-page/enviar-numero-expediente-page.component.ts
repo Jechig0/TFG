@@ -56,13 +56,13 @@ export class EnviarNumeroExpedienteComponent {
     this.alumnosService.verificarAlumno(codigoLimpio, dniLimpio).subscribe({
       next: (res) => {
     Swal.close();
-    if (res.estado === 'existente') {
+    if (res === 'existente') {
       this.alumnoStateService.setAlumno(codigoLimpio, dniLimpio);
       this.router.navigate([`/alumno/${codigoLimpio}`]);
-    } else if (res.estado === 'nuevo') {
+    } else if (res === 'nuevo') {
       this.alumnoStateService.setAlumno(codigoLimpio, dniLimpio);
       this.router.navigate([`/nuevo-alumno/${codigoLimpio}`]);
-    } else if (res.estado === 'dni_incorrecto') {
+    } else if (res === 'dni_incorrecto') {
       Swal.fire({
         icon: 'error',
         title: 'Error',

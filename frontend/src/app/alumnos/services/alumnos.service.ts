@@ -49,13 +49,15 @@ export class AlumnosService {
   );
   }
 
-  verificarAlumno(id: string, dni:string): Observable<{estado: string}>{
+  verificarAlumno(id: string, dni:string): Observable<string>{
     const res = JSON.stringify({"id_alumno":id, "dni": dni})
     console.log(id, dni)
     return this.http.post<{estado: string}>(`${this.apiUrl}/alumno/verificar`, {
-    id_alumno: id.trim(),
-    dni: dni.trim().toUpperCase()
-});
+      id_alumno: id.trim(),
+      dni: dni.trim().toUpperCase()
+}).pipe(
+    map(response => response.estado)
+);
 
 
   }
