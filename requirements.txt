@@ -6,3 +6,4 @@ scikit-learn
 pdfplumber
 python-multipart
 pydantic
+hdbscan

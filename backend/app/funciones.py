@@ -167,9 +167,8 @@ def obtener_vector_alumno(
 def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     # Crear matriz alumno-asignatura
     df['NUM_CALIFICACIÓN'] = pd.to_numeric(df['NUM_CALIFICACIÓN'], errors='coerce')
-    matriz = df.pivot_table(index='CODIGOALUM', columns='NOMBREASIGNATURA', values='NUM_CALIFICACIÓN')
-    matriz = matriz.fillna(0)  #Para evitar valores NaN
-    
+    matriz = df.pivot_table(index='CODIGOALUM', columns='NOMBREASIGNATURA', values='NUM_CALIFICACIÓN').fillna(0)  #Para evitar valores NaN
+
     scaler = StandardScaler()
     matriz_escalada = scaler.fit_transform(matriz)
     

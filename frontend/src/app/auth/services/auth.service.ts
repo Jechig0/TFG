@@ -25,9 +25,11 @@ export class AuthService {
       tap(response => {
         if (response === "Usuario autorizado") {
           this._isAdmin.set(true);
+          sessionStorage.setItem('isAdmin', 'true');
         }
         else {
           this._isAdmin.set(false);
+          sessionStorage.removeItem('isAdmin');
         }
       })
     );
