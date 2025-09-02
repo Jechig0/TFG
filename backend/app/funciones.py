@@ -189,28 +189,24 @@ def predecir_afinidad_cluster(
     matriz_base: pd.DataFrame,
     df_clusters: pd.DataFrame,
     df_original: pd.DataFrame,
-    alumno_row: pd.DataFrame | None = None,   # NUEVO: vector 1×N del alumno
+    alumno_row: pd.DataFrame | None = None,
 ) -> float | None:
     """
-    Calcula la afinidad como media de notas del cluster del alumno en esa asignatura, escalada/normalizada.
-    - Si alumno_row es None, intenta buscar al alumno en la matriz_base.
-    - Devuelve None si la asignatura no existe en la matriz base (no vista en entrenamiento).
+    Calcula la afinidad como combinación de:
+    0.5 * nota media normalizada del cluster +
+    0.5 * porcentaje de alumnos en el cluster que se matricularon en la asignatura.
     """
 
-    # Normaliza el nombre de asignatura como en el entreno (sin espacios)
     asignatura_norm = str(asignatura).replace(" ", "")
 
-    # La asignatura debe existir en las columnas del modelo (vistas en el entreno)
     if asignatura_norm not in matriz_base.columns:
         return None
 
-    # 1) Conseguir vector escalado del alumno
+    # 1) Vector del alumno
     if alumno_row is not None:
-        # Asegurar mismo orden de columnas
         alumno_row = alumno_row.reindex(columns=matriz_base.columns, fill_value=0.0)
         alumno_vector_scaled = scaler.transform(alumno_row)
     else:
-        # Usar fila existente del entreno (si el alumno ya estaba ahí)
         if alumno_id not in matriz_base.index:
             return None
         alumno_vector_scaled = scaler.transform(matriz_base.loc[[alumno_id]])
@@ -218,30 +214,45 @@ def predecir_afinidad_cluster(
     # 2) Cluster del alumno
     cluster_id = modelo.predict(alumno_vector_scaled)[0]
 
-    # 3) Alumnos en ese cluster (del entreno)
+    # 3) Alumnos en ese cluster
     alumnos_similares = df_clusters.loc[df_clusters["cluster"] == cluster_id, "CODIGOALUM"]
 
-    # 4) Notas de esos alumnos en la asignatura en el df original (no pivot)
-    notas = df_original[
+    # 4) Subset de esos alumnos para la asignatura
+    subset = df_original[
         (df_original["CODIGOALUM"].isin(alumnos_similares)) &
         (df_original["NOMBREASIGNATURA"] == asignatura_norm) &
         (df_original["NUM_CALIFICACIÓN"].notnull())
-    ]["NUM_CALIFICACIÓN"]
+    ].copy()
 
-    # A float robusto
-    notas = (
-        notas.astype(str)
+    # Normalizar notas
+    subset["NUM_CALIFICACIÓN"] = (
+        subset["NUM_CALIFICACIÓN"]
+        .astype(str)
         .str.replace(",", ".", regex=False)
         .apply(lambda x: pd.to_numeric(x, errors="coerce"))
-        .dropna()
     )
 
-    if notas.empty:
+    subset = subset.dropna(subset=["NUM_CALIFICACIÓN"])
+
+    if subset.empty:
         return 0.0
 
-    # Escala 0-1 como media/10
-    afinidad = float(notas.mean()) / 10.0
+    # --- (a) Nota media normalizada
+    nota_media_norm = float(subset["NUM_CALIFICACIÓN"].mean()) / 10.0
+
+    # --- (b) Porcentaje de alumnos del cluster con nota > 0 (matriculados)
+    total_alumnos_cluster = len(alumnos_similares)
+    alumnos_matriculados = subset.loc[subset["NUM_CALIFICACIÓN"] > 0, "CODIGOALUM"].nunique()
+    alumnos_matriculados = subset.loc[subset["NUM_CALIFICACIÓN"] > 0, "CODIGOALUM"].nunique()
+    porcentaje_matriculados = alumnos_matriculados / total_alumnos_cluster if total_alumnos_cluster > 0 else 0.0
+    
+    print(f"[DEBUG] {asignatura=} {cluster_id=} {total_alumnos_cluster=} {alumnos_matriculados=} {porcentaje_matriculados=:.3f} {nota_media_norm=:.3f}")
+
+    # --- Afinidad combinada
+    afinidad = nota_media_norm + porcentaje_matriculados
+
     return round(afinidad, 3)
+
 
 
 #Saco del PDF todas las notas, el DNI y el número de expediente del alumno.

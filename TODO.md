@@ -15,6 +15,7 @@ BACKEND
 -Revisar precisión endpoint afinidad.
 -Hacer pruebas y
 -Trabajar muestras de precisión del cluster
+-Probar para la afinidad con porcentaje de alumnos aprobados.
 
 REUNION
 -Dashboard administrador.
