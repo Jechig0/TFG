@@ -243,13 +243,14 @@ def predecir_afinidad_cluster(
     # --- (b) Porcentaje de alumnos del cluster con nota > 0 (matriculados)
     total_alumnos_cluster = len(alumnos_similares)
     alumnos_matriculados = subset.loc[subset["NUM_CALIFICACIÓN"] > 0, "CODIGOALUM"].nunique()
-    alumnos_matriculados = subset.loc[subset["NUM_CALIFICACIÓN"] > 0, "CODIGOALUM"].nunique()
+    alumnos_aprobados = subset.loc[subset["NUM_CALIFICACIÓN"] >= 5, "CODIGOALUM"].nunique()
     porcentaje_matriculados = alumnos_matriculados / total_alumnos_cluster if total_alumnos_cluster > 0 else 0.0
+    porcentaje_aprobados = alumnos_aprobados / alumnos_matriculados if alumnos_matriculados > 0 else 0.0
     
-    print(f"[DEBUG] {asignatura=} {cluster_id=} {total_alumnos_cluster=} {alumnos_matriculados=} {porcentaje_matriculados=:.3f} {nota_media_norm=:.3f}")
+    #print(f"[DEBUG] {asignatura=} {cluster_id=} {total_alumnos_cluster=} {alumnos_matriculados=} {porcentaje_matriculados=:.3f} {nota_media_norm=:.3f} {alumnos_aprobados=} {porcentaje_aprobados=:.3f}")
 
     # --- Afinidad combinada
-    afinidad = nota_media_norm + porcentaje_matriculados
+    afinidad = 0.45 * nota_media_norm + 0.1 * porcentaje_matriculados + 0.45 * porcentaje_aprobados
 
     return round(afinidad, 3)
 

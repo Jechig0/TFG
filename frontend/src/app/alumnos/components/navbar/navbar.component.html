@@ -46,10 +46,13 @@
     <!-- Panel admin (solo si isAdmin) -->
     @if (auth.isAdmin()) {
       <a class="btn btn-primary" routerLink="/admin" (click)="this.router.navigate(['/admin'])">Panel Admin</a>
+    } @else {
+      @if (alumnoStateService.getId() != null) {
+        <a class="btn btn-primary" routerLink="/alumno" (click)="this.goToAlumnoPage()">Mi Perfil</a>
+      } @else {
+        <a class="btn btn-primary" routerLink="/alumno" (click)="this.goToAlumnoPage()">Acceder</a>
     }
-    @else {
-      <button class="btn btn-outline" (click)="goToAdminLogin()">Login Admin</button>
-    }
+  }
   </div>
 
   <!-- Móvil: panel desplegable -->

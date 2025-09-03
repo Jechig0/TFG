@@ -7,7 +7,7 @@ GENERAL
 FRONTEND
 -Usar sessionStorage para agilizar procesos.
 -Enviar número expediente: arreglar div, las barras no llegan al final.
--Navbar: revisar routerlinkActive, no funciona correctamente.
+-Navbar: revisar routerlinkActive, no funciona correctamente. Revisar redirección a alumno.
 -Admin Dashboard: Añadir la visualización de los datos.
 -Crear guardias de las rutas.
 
@@ -15,7 +15,6 @@ BACKEND
 -Revisar precisión endpoint afinidad.
 -Hacer pruebas y
 -Trabajar muestras de precisión del cluster
--Probar para la afinidad con porcentaje de alumnos aprobados.
 
 REUNION
 -Dashboard administrador.
