@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TablaNotasComponent } from "../../components/tabla-notas/tabla-notas.component";
 import { ListaAsignaturasComponent } from "../../components/lista-asignaturas/lista-asignaturas.component";
 import Swal from 'sweetalert2';
+import { delay } from 'rxjs';
 
 @Component({
   selector: 'app-alumno-page',
@@ -19,7 +20,7 @@ export class AlumnoPageComponent {
   router = inject(Router)
 
   alumnoId = this.activatedRoute.snapshot.params['id']
-  mostrarTabla = signal<boolean>(false)
+  mostrarTabla = signal<boolean>(true)
 
   alumnoResource = rxResource({
     request: () => ({id:this.alumnoId}),
@@ -29,10 +30,6 @@ export class AlumnoPageComponent {
   })
 
   mediaAlumno = toSignal(this.alumnosService.getMediaAlumno(this.alumnoId))
-
-  goToInsert() {
-    this.router.navigate(['/nuevo-alumno'])
-  }
 
   actualizarExpediente() {
     this.router.navigate([`/nuevo-alumno/${this.alumnoId}`]);

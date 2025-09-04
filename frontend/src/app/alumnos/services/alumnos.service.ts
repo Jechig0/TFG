@@ -15,35 +15,35 @@ export class AlumnosService {
   private http = inject(HttpClient)
   alumnoStateService = inject(AlumnoStateService);
 
-  alumnos = signal<Record<string, [string, number][]>>({});
-  mediaAlumnos = signal<Record<string, string>>({});
+  // alumnos = signal<Record<string, [string, number][]>>({});
+  // mediaAlumnos = signal<Record<string, string>>({});
 
 
   getAlumnoById(id: string): Observable<[string, number][]> {
-  const cache = this.alumnos();
-  if (cache[id]) {
-    console.log('Cache hit for alumno:', id);
-    return of(cache[id]); // Devuelve lo cacheado
-  }
+  // const cache = this.alumnos();
+  // if (cache[id]) {
+  //   console.log('Cache hit for alumno:', id);
+  //   return of(cache[id]); // Devuelve lo cacheado
+  // }
 
   return this.http.get<[string, number][]>(`${this.apiUrl}/alumno/${id}`).pipe(
     map((data) => {
       const resultado = data.map(([asignatura, nota]) => [asignatura, +nota] as [string, number]);
-      this.alumnos.update(prev => ({ ...prev, [id]: resultado }));
+      // this.alumnos.update(prev => ({ ...prev, [id]: resultado }));
       return resultado;
     })
     );
   }
 
   getMediaAlumno(id: string): Observable<string>{
-    const cache = this.mediaAlumnos();
-    if (cache[id]) {
-      console.log('Cache hit for mediaAlumno:', id);
-      return of(cache[id]);
-  }
+  //   const cache = this.mediaAlumnos();
+  //   if (cache[id]) {
+  //     console.log('Cache hit for mediaAlumno:', id);
+  //     return of(cache[id]);
+  // }
     return this.http.get<string>(`${this.apiUrl}/alumno/${id}/media/`).pipe(
       map((media) => {
-      this.mediaAlumnos.update(prev => ({ ...prev, [id]: media }));
+      // this.mediaAlumnos.update(prev => ({ ...prev, [id]: media }));
       return media;
     })
   );

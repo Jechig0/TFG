@@ -62,7 +62,13 @@
                   <div class="stat-value">{{ getProbabilidad(asignatura) | percent:'1.2-2' }}</div>
                 </div>
                 <div class="stat">
-                  <div class="stat-title">Afinidad</div>
+                  <div class="stat-title flex items-center gap-2">
+                    Afinidad
+                    <div class="tooltip tooltip-top z-[1000] relative" 
+                         data-tip="La afinidad se calcula analizando tu perfil académico, las notas en asignaturas relacionadas y patrones de éxito de estudiantes anteriores.">
+                      <i class="fa-solid fa-circle-info text-info cursor-help"></i>
+                    </div>
+                  </div>
                   <div class="stat-value">{{ getAfinidad(asignatura) | percent:'1.2-2' }}</div>
                 </div>
               </div>

@@ -1,8 +1,8 @@
 import { AlumnoStateService } from '@/alumnos/services/alumno-state.service';
 import { AuthService } from '@/auth/services/auth.service';
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { RouterLink } from "../../../../../node_modules/@angular/router/router_module.d-BivBj8FC";
+import { Router, RouterLink } from '@angular/router';
+
 
 @Component({
   selector: 'navbar',

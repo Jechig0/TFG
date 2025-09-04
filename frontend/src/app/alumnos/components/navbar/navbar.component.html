@@ -41,7 +41,7 @@
   <!-- Menú desktop -->
   <div class="hidden md:flex flex-none items-center space-x-2">
     <a class="btn btn-ghost" routerLink="/" routerLinkActive="btn-active" (click)="this.router.navigate(['/'])">Inicio</a>
-    <a class="btn btn-ghost" routerLink="/alumno" routerLinkActive="btn-active" (click)="this.goToAlumnoPage()">Alumno</a>
+    <a class="btn btn-ghost" routerLink="/alumno" routerLinkActive="btn-active" (click)="this.router.navigate(['/alumno'])">Alumno</a>
     <!-- Login admin (visible siempre) -->
     <!-- Panel admin (solo si isAdmin) -->
     @if (auth.isAdmin()) {
