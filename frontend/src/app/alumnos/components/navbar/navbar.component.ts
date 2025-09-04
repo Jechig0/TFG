@@ -30,7 +30,9 @@ export class NavbarComponent {
     if (alumnoId != null){
       this.router.navigate([`alumno/${alumnoId}`]);
     }
-    this.router.navigate(['/alumno']);
+    else{
+      this.router.navigate(['/alumno']);
+    }
   }
 
   goToAdminLogin(): void {
