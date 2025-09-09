@@ -67,8 +67,8 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     media = calcular_media_ponderada_alumno(cur, codigo_alumno)[0]
     if media is None:
         raise HTTPException(status_code=400, detail=f"No se ha podido calcular la media del alumno {codigo_alumno}")
-    if media >=4:
-        return 1
+    # if media >=4:
+    #     return 1
     
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
@@ -705,7 +705,10 @@ def obtener_asignatura_sin_normalizar(conn: oracledb.Connection, asignatura: str
                 FROM V_CALIFICACIONES
                 WHERE REPLACE(NOMBREASIGNATURA, ' ', '') = :asignatura
                 """, asignatura=asignatura)
-    asignatura = cur.fetchone()[0]
+    resultado = cur.fetchone()
+    if resultado is None:
+        raise HTTPException(status_code=400, detail=f"No se ha encontrado la asignatura {asignatura}")
     cur.close()
-    
+    asignatura = resultado[0]
+
     return asignatura
