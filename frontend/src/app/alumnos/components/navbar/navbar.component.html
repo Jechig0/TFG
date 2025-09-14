@@ -50,7 +50,7 @@
       @if (alumnoStateService.getId() != null) {
         <a class="btn btn-primary" routerLink="/alumno" (click)="this.goToAlumnoPage()">Mi Perfil</a>
       } @else {
-        <a class="btn btn-primary" routerLink="/alumno" (click)="this.goToAlumnoPage()">Acceder</a>
+        <a class="btn btn-primary" routerLink="/alumno" (click)="this.router.navigate(['/admin/login'])">Acceso Admin</a>
     }
   }
   </div>
