@@ -28,7 +28,7 @@
 <div class="grid grid-cols-2 gap-3 w-full h-full">
     <div>
         @if (alumnoResource.hasValue() && mostrarTabla()) {
-            <tabla-notas [alumnos]="alumnoResource.value()" [mediaAlumno]="mediaAlumno() ?? '0.0'"/>
+            <tabla-notas [alumnos]="alumnoResource.value()"/>
     }
     </div>
     <div>

@@ -6,6 +6,7 @@ export class AlumnoStateService {
   setAlumno(id: string, dni: string) {
     sessionStorage.setItem("id_alumno", id.trim());
     sessionStorage.setItem("dni", dni.toUpperCase().trim());
+    sessionStorage.setItem("isAdmin", "false");
   }
 
   getId(): string | null {
@@ -19,5 +20,6 @@ export class AlumnoStateService {
   clear() {
     sessionStorage.removeItem("id_alumno");
     sessionStorage.removeItem("dni");
+    sessionStorage.removeItem("isAdmin");
   }
 }

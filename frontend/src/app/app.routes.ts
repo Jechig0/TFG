@@ -1,4 +1,7 @@
 import { Routes } from '@angular/router';
+import { isAdminGuard } from './alumnos/guards/is-admin.guard';
+import { AuthenticatedGuard } from './alumnos/guards/authenticated.guard';
+import { NotAuthenticatedGuard } from './alumnos/guards/not-authenticated.guard';
 
 export const routes: Routes = [
 
@@ -9,6 +12,7 @@ export const routes: Routes = [
 
     {
         path:'alumno/:id',
+        canMatch: [AuthenticatedGuard],
         loadComponent: () => import('./alumnos/pages/alumno-page/alumno-page.component').then(m => m.AlumnoPageComponent)
     },
 
@@ -24,11 +28,13 @@ export const routes: Routes = [
     
     {
         path: 'admin/login',
+        canMatch: [NotAuthenticatedGuard],
         loadComponent: () => import('./auth/pages/admin-login-page/admin-login-page.component').then(m => m.AdminLoginPageComponent)
     },
 
     {
         path: 'admin',
+        canMatch: [isAdminGuard],
         loadComponent: () => import('./auth/pages/admin-page/admin-page.component').then(m => m.AdminPageComponent)
     },
 

@@ -1,11 +1,11 @@
 import { AlumnosService } from '@/alumnos/services/alumnos.service';
 import {Component, inject, signal } from '@angular/core';
-import {rxResource, toSignal} from '@angular/core/rxjs-interop';
+import {rxResource} from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TablaNotasComponent } from "../../components/tabla-notas/tabla-notas.component";
 import { ListaAsignaturasComponent } from "../../components/lista-asignaturas/lista-asignaturas.component";
 import Swal from 'sweetalert2';
-import { delay } from 'rxjs';
+import { AlumnoStateService } from '@/alumnos/services/alumno-state.service';
 
 @Component({
   selector: 'app-alumno-page',
@@ -15,6 +15,7 @@ import { delay } from 'rxjs';
 export class AlumnoPageComponent {
 
   alumnosService = inject(AlumnosService)
+  alumnoStateService = inject(AlumnoStateService)
   activatedRoute = inject(ActivatedRoute)
 
   router = inject(Router)
@@ -28,8 +29,6 @@ export class AlumnoPageComponent {
       return this.alumnosService.getAlumnoById(request.id);
     }
   })
-
-  mediaAlumno = toSignal(this.alumnosService.getMediaAlumno(this.alumnoId))
 
   actualizarExpediente() {
     this.router.navigate([`/nuevo-alumno/${this.alumnoId}`]);
@@ -48,6 +47,7 @@ export class AlumnoPageComponent {
         this.alumnosService.eliminarAlumno(this.alumnoId).subscribe({
           next: () => {
             Swal.fire('Eliminado', 'El expediente ha sido borrado correctamente.', 'success');
+            this.alumnoStateService.clear();
             this.router.navigate(['/']); // Redirige al inicio
           },
           error: (err) => {
