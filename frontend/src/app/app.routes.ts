@@ -25,7 +25,7 @@ export const routes: Routes = [
         path:'nuevo-alumno/:id',
         loadComponent: () => import('./alumnos/pages/alumno-nuevo-page/alumno-nuevo-page.component').then(m => m.AlumnoNuevoPageComponent)
     },
-    
+
     {
         path: 'admin/login',
         canMatch: [NotAuthenticatedGuard],
@@ -36,6 +36,11 @@ export const routes: Routes = [
         path: 'admin',
         canMatch: [isAdminGuard],
         loadComponent: () => import('./auth/pages/admin-page/admin-page.component').then(m => m.AdminPageComponent)
+    },
+
+    {
+        path: 'faq',
+        loadComponent: () => import('./alumnos/pages/faq-page/faq-page.component').then(m => m.FaqPageComponent)
     },
 
     {

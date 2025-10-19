@@ -21,10 +21,10 @@
 <div class="flex-1 flex items-center">
   <a class="btn btn-ghost normal-case text-xl flex items-center" (click)="this.router.navigate(['/'])">
     <!-- Logo UMA -->
-    <img 
-      src="assets/uma.jpg" 
-      alt="Logo Universidad" 
-      class="h-14 mr-2 inline-block sm:inline" 
+    <img
+      src="assets/uma.jpg"
+      alt="Logo Universidad"
+      class="h-14 mr-2 inline-block sm:inline"
     />
     <!-- Texto Universidad -->
     <span class="align-middle hidden md:inline">Universidad de Málaga</span>
@@ -42,6 +42,7 @@
   <div class="hidden md:flex flex-none items-center space-x-2">
     <a class="btn btn-ghost" routerLink="/" routerLinkActive="btn-active" (click)="this.router.navigate(['/'])">Inicio</a>
     <a class="btn btn-ghost" routerLink="/alumno" routerLinkActive="btn-active" (click)="this.router.navigate(['/alumno'])">Alumno</a>
+    <a class="btn btn-ghost" routerLink="/faq" routerLinkActive="btn-active" (click)="this.router.navigate(['/faq'])">FAQ</a>
     <!-- Login admin (visible siempre) -->
     <!-- Panel admin (solo si isAdmin) -->
     @if (auth.isAdmin()) {

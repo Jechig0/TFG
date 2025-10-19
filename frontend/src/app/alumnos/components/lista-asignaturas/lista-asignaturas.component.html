@@ -58,16 +58,21 @@
             } @else {
               <div class="stats stats-vertical lg:stats-horizontal shadow">
                 <div class="stat">
-                  <div class="stat-title">Probabilidad de entrada</div>
+                  <div class="stat-title flex items-center gap-2">
+                    Probabilidad de entrada
+                    <a href="/faq" target="_blank" class="text-info">
+                      <i class="fa-solid fa-circle-info cursor-help"></i>
+                    </a>
+                  </div>
                   <div class="stat-value">{{ getProbabilidad(asignatura) | percent:'1.2-2' }}</div>
                 </div>
+
                 <div class="stat">
                   <div class="stat-title flex items-center gap-2">
                     Afinidad
-                    <div class="tooltip tooltip-top z-[1000] relative" 
-                         data-tip="La afinidad se calcula analizando tu perfil académico, las notas en asignaturas relacionadas y patrones de éxito de estudiantes anteriores.">
-                      <i class="fa-solid fa-circle-info text-info cursor-help"></i>
-                    </div>
+                    <a href="/faq" target="_blank" class="text-info">
+                      <i class="fa-solid fa-circle-info cursor-help"></i>
+                    </a>
                   </div>
                   <div class="stat-value">{{ getAfinidad(asignatura) | percent:'1.2-2' }}</div>
                 </div>

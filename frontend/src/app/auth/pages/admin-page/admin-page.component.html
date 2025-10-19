@@ -88,13 +88,97 @@
                     </div>
                 }
                 @case ('afinidad') {
-                    <!-- Similar structure for afinidad -->
+                    <div class="bg-gray-800 rounded-lg p-6">
+                        <h2 class="text-2xl font-bold mb-4">Asignaturas más populares</h2>
+                        @if (asignaturasPopularesResource.isLoading()) {
+                            <div class="flex justify-center">
+                                <span class="loading loading-spinner loading-lg"></span>
+                            </div>
+                        } @else if (asignaturasPopularesResource.error()) {
+                            <div class="text-red-500">Error al cargar los datos</div>
+                        } @else {
+                            <div class="overflow-x-auto">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Asignatura</th>
+                                            <th>Consultas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (item of asignaturasPopularesResource.value(); track $index) {
+                                            <tr>
+                                                <td>{{item.asignatura}}</td>
+                                                <td>{{item.consultas}}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
                 }
                 @case ('probabilidad') {
-                    <!-- Similar structure for probabilidad -->
+                    <div class="bg-gray-800 rounded-lg p-6">
+                        <h2 class="text-2xl font-bold mb-4">Asignaturas más populares</h2>
+                        @if (asignaturasPopularesResource.isLoading()) {
+                            <div class="flex justify-center">
+                                <span class="loading loading-spinner loading-lg"></span>
+                            </div>
+                        } @else if (asignaturasPopularesResource.error()) {
+                            <div class="text-red-500">Error al cargar los datos</div>
+                        } @else {
+                            <div class="overflow-x-auto">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Asignatura</th>
+                                            <th>Consultas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (item of asignaturasPopularesResource.value(); track $index) {
+                                            <tr>
+                                                <td>{{item.asignatura}}</td>
+                                                <td>{{item.consultas}}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
                 }
                 @case ('titulaciones') {
-                    <!-- Similar structure for titulaciones -->
+                    <div class="bg-gray-800 rounded-lg p-6">
+                        <h2 class="text-2xl font-bold mb-4">Asignaturas más populares</h2>
+                        @if (asignaturasPopularesResource.isLoading()) {
+                            <div class="flex justify-center">
+                                <span class="loading loading-spinner loading-lg"></span>
+                            </div>
+                        } @else if (asignaturasPopularesResource.error()) {
+                            <div class="text-red-500">Error al cargar los datos</div>
+                        } @else {
+                            <div class="overflow-x-auto">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Asignatura</th>
+                                            <th>Consultas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (item of asignaturasPopularesResource.value(); track $index) {
+                                            <tr>
+                                                <td>{{item.asignatura}}</td>
+                                                <td>{{item.consultas}}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
                 }
             }
         </div>

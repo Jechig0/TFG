@@ -1,0 +1,115 @@
+<div class="container mx-auto p-4">
+  <h1 class="text-4xl font-bold text-center mb-8">Preguntas Frecuentes</h1>
+
+  <!-- Información General -->
+  <div class="mb-8">
+    <h2 class="text-2xl font-semibold mb-4">
+      <i class="fa-solid fa-circle-info mr-2"></i>
+      Información General
+    </h2>
+    <div class="join join-vertical w-full">
+      <div class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="general-accordion" checked />
+        <div class="collapse-title text-xl font-medium">
+          ¿Cuál es el propósito de esta aplicación?
+        </div>
+        <div class="collapse-content">
+          <p>Esta aplicación está diseñada para ayudar a los estudiantes a tomar decisiones informadas sobre la elección de asignaturas optativas.
+            Utilizamos datos históricos y tu perfil académico para proporcionar predicciones personalizadas sobre tus posibilidades de admisión y éxito en diferentes asignaturas.
+            Su propósito es puramente informativo y no garantiza resultados específicos. Te recomendamos que utilices esta información como una guía por si tienes dudas,
+            pero no dudes en consultar a un asesor académico, o las guías docentes de cada asignatura para más datos específicos. La decisión final es tuya.</p>
+        </div>
+      </div>
+
+      <div class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="general-accordion" />
+        <div class="collapse-title text-xl font-medium">
+          ¿Qué datos se almacenan sobre mí?
+        </div>
+        <div class="collapse-content">
+          <p>Almacenamos únicamente la información necesaria para proporcionar nuestros servicios:</p>
+          <ul class="list-disc list-inside mt-2">
+            <li>Tu número de expediente académico y tus calificaciones</li>
+            <li>Tu parte final del DNI (codificada para proteger tu identidad)</li>
+            <li>Tus consultas realizadas en la aplicación.</li>
+          </ul>
+          <p>Esta información se utiliza exclusivamente para mejorar nuestros servicios y no se comparte con terceros.
+            Tampoco se puede identificar a los usuarios a partir de esta información.
+          </p>
+        </div>
+      </div>
+
+      <div class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="general-accordion" />
+        <div class="collapse-title text-xl font-medium">
+          ¿Cómo se protege mi información?
+        </div>
+        <div class="collapse-content">
+          <p>Tu seguridad es nuestra prioridad. Implementamos las siguientes medidas:</p>
+          <ul class="list-disc list-inside mt-2">
+            <li>Encriptación de datos sensibles</li>
+            <li>Acceso restringido y autenticación segura</li>
+            <li>Cumplimiento con la normativa de protección de datos</li>
+            <li>Posibilidad en cualquier momento de eliminar tu expediente y DNI de la base de datos.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cálculos y Predicciones -->
+  <div class="mb-8">
+    <h2 class="text-2xl font-semibold mb-4">
+      <i class="fa-solid fa-calculator mr-2"></i>
+      Cálculos y Predicciones
+    </h2>
+    <div class="join join-vertical w-full">
+      <div id="probabilidad" class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="calculo-accordion" checked />
+        <div class="collapse-title text-xl font-medium">
+          ¿Cómo se calcula la probabilidad de entrada?
+        </div>
+        <div class="collapse-content">
+          <p>La probabilidad de entrada se calcula considerando varios factores:</p>
+          <ul class="list-disc list-inside mt-2">
+            <li>Histórico de notas de corte de años anteriores</li>
+            <li>Se contempla de dicho histórico en cuales tu media supera la nota de corte</li>
+            <li>Se calcula el porcentaje de años en los que se ha superado la nota de corte, considerando también tendencias crecientes o decrecientes</li>
+          </ul>
+          <p>¡OJO! Esta probabilidad es solo una estimación y puede variar en función de múltiples factores, como un repentino aumento en la demanda de la asignatura.</p>
+        </div>
+      </div>
+
+      <div id="afinidad" class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="calculo-accordion" />
+        <div class="collapse-title text-xl font-medium">
+          ¿Qué significa la afinidad y cómo se calcula?
+        </div>
+        <div class="collapse-content">
+          <p>La afinidad es un indicador que muestra qué tan bien se ajusta una asignatura a tu perfil académico:</p>
+          <ul class="list-disc list-inside mt-2">
+            <li>Se analiza tu perfil académico, realizando un proceso de clustering (clasificación en grupos similares).</li>
+            <li>Dentro de cada grupo, se busca: popularidad de la asignatura, tasa de aprobados y nota media, y se realiza una media ponderada.</li>
+            <li>Esta media es lo que se utiliza para calcular la afinidad. Debe ser tomada como algo orientativo que puede no ajustarse perfectamente.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="afinidad" class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="calculo-accordion" />
+        <div class="collapse-title text-xl font-medium">
+          Entonces, ¿cómo interpreto el resultado de mi afinidad?
+        </div>
+        <div class="collapse-content">
+          <p>La afinidad es un indicador que muestra qué tan bien se ajusta una asignatura a tu perfil académico:</p>
+          <ul class="list-disc list-inside mt-2">
+            <li>Se analiza tu perfil académico, realizando un proceso de clustering (clasificación en grupos similares).</li>
+            <li>Dentro de cada grupo, se busca: popularidad de la asignatura, tasa de aprobados y nota media, y se realiza una media ponderada.</li>
+            <li>Esta media es lo que se utiliza para calcular la afinidad. Debe ser tomada como algo orientativo que puede no ajustarse perfectamente.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
