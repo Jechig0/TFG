@@ -8,9 +8,10 @@ export class AuthService {
 
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl
-  private _isAdmin = signal<boolean>(false);
 
-  isAdmin = computed(() => this._isAdmin());
+  checkAdmin(): boolean {
+    return sessionStorage.getItem('isAdmin') === 'true';
+  }
 
   login(usuario: string, password: string): Observable<string> {
     const formData = new FormData();
@@ -24,11 +25,9 @@ export class AuthService {
       map(response => response.message),
       tap(response => {
         if (response === "Usuario autorizado") {
-          this._isAdmin.set(true);
           sessionStorage.setItem('isAdmin', 'true');
         }
         else {
-          this._isAdmin.set(false);
           sessionStorage.removeItem('isAdmin');
         }
       })

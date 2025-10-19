@@ -45,7 +45,7 @@
     <a class="btn btn-ghost" routerLink="/faq" routerLinkActive="btn-active" (click)="this.router.navigate(['/faq'])">FAQ</a>
     <!-- Login admin (visible siempre) -->
     <!-- Panel admin (solo si isAdmin) -->
-    @if (auth.isAdmin()) {
+    @if (auth.checkAdmin()) {
       <a class="btn btn-primary" routerLink="/admin" (click)="this.router.navigate(['/admin'])">Panel Admin</a>
     } @else {
       @if (alumnoStateService.getId() != null) {
@@ -66,7 +66,7 @@
         <button class="py-2 px-3 text-left rounded hover:bg-gray-100" (click)="goToAdminLogin(); closeMobileMenu()">Login Admin</button>
 
         <!-- panel admin solo si isAdmin -->
-        @if (auth.isAdmin()) {
+        @if (auth.checkAdmin()) {
           <a class="py-2 px-3 rounded btn btn-sm btn-primary" routerLink="/admin/panel" (click)="closeMobileMenu()">Panel Admin</a>
         }
       </nav>
