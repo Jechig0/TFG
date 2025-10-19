@@ -12,7 +12,7 @@ type ViewType = 'populares' | 'afinidad' | 'probabilidad' | 'titulaciones';
 })
 export class AdminPageComponent {
   private adminService = inject(AdminService);
-  
+
   currentView = signal<ViewType>('populares');
 
   asignaturasPopularesResource = rxResource({

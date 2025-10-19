@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '@environments/environment';
+import { AsignaturaCount, AsignaturaCountRaw } from '../interfaces/adminResponse.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -10,21 +11,27 @@ export class AdminService {
   private http = inject(HttpClient);
   private baseUrl = environment.apiUrl;
 
-  getAsignaturasPopulares(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/asignaturas_populares`).pipe(
-      tap(data => console.log('Fetched populares:', data))
-    );
+  private transformResponse(data: AsignaturaCountRaw[]): AsignaturaCount[] {
+    return data.map(([nombre, count]) => ({ nombre, count }));
   }
 
-  getAsignaturasAfinidad(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/asignaturas_afinidad`);
+  getAsignaturasPopulares(): Observable<AsignaturaCount[]> {
+    return this.http.get<AsignaturaCountRaw[]>(`${this.baseUrl}/admin/asignaturas_populares`)
+      .pipe(map(this.transformResponse));
   }
 
-  getAsignaturasProbabilidad(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/asignaturas_probabilidad`);
+  getAsignaturasAfinidad(): Observable<AsignaturaCount[]> {
+    return this.http.get<AsignaturaCountRaw[]>(`${this.baseUrl}/admin/asignaturas_afinidad`)
+      .pipe(map(this.transformResponse));
   }
 
-  getTitulaciones(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/titulaciones`);
+  getAsignaturasProbabilidad(): Observable<AsignaturaCount[]> {
+    return this.http.get<AsignaturaCountRaw[]>(`${this.baseUrl}/admin/asignaturas_probabilidad`)
+      .pipe(map(this.transformResponse));
+  }
+
+  getTitulaciones(): Observable<AsignaturaCount[]> {
+    return this.http.get<AsignaturaCountRaw[]>(`${this.baseUrl}/admin/titulaciones`)
+      .pipe(map(this.transformResponse));
   }
 }

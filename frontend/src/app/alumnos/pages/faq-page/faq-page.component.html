@@ -89,23 +89,24 @@
           <p>La afinidad es un indicador que muestra qué tan bien se ajusta una asignatura a tu perfil académico:</p>
           <ul class="list-disc list-inside mt-2">
             <li>Se analiza tu perfil académico, realizando un proceso de clustering (clasificación en grupos similares).</li>
+            <li>Se te coloca en uno de los grupos identificados. Éste se corresponderá al de los alumnos que han cursado asignaturas similares y tienen resultados similares a los tuyos.</li>
             <li>Dentro de cada grupo, se busca: popularidad de la asignatura, tasa de aprobados y nota media, y se realiza una media ponderada.</li>
             <li>Esta media es lo que se utiliza para calcular la afinidad. Debe ser tomada como algo orientativo que puede no ajustarse perfectamente.</li>
           </ul>
         </div>
       </div>
 
-      <div id="afinidad" class="collapse collapse-arrow join-item border border-base-300">
+      <div id="resultados" class="collapse collapse-arrow join-item border border-base-300">
         <input type="radio" name="calculo-accordion" />
         <div class="collapse-title text-xl font-medium">
           Entonces, ¿cómo interpreto el resultado de mi afinidad?
         </div>
         <div class="collapse-content">
-          <p>La afinidad es un indicador que muestra qué tan bien se ajusta una asignatura a tu perfil académico:</p>
+          <p>Si estás dudando entre varias asignaturas, la afinidad puede ayudarte a decidir. Para que puedas usarlo de referencia:</p>
           <ul class="list-disc list-inside mt-2">
-            <li>Se analiza tu perfil académico, realizando un proceso de clustering (clasificación en grupos similares).</li>
-            <li>Dentro de cada grupo, se busca: popularidad de la asignatura, tasa de aprobados y nota media, y se realiza una media ponderada.</li>
-            <li>Esta media es lo que se utiliza para calcular la afinidad. Debe ser tomada como algo orientativo que puede no ajustarse perfectamente.</li>
+            <li>Afinidad menor al 40%: La asignatura no es popular entre alumnos de tu perfil, y además tienden a sacar notas bajas o a abandonarla.</li>
+            <li>Afinidad entre 40% y 70%: La asignatura tiene una aceptación moderada. Los alumnos de tu perfil sacan notas promedio, pero puede que no se ajuste perfectamente a ellos.</li>
+            <li>Afinidad mayor al 70%: La asignatura es popular entre alumnos de tu perfil y tienden a sacar buenas notas.</li>
           </ul>
         </div>
       </div>
