@@ -63,6 +63,7 @@ export class EnviarNumeroExpedienteComponent {
       this.alumnoStateService.setAlumno(codigoLimpio, dniLimpio);
       this.router.navigate([`/nuevo-alumno/${codigoLimpio}`]);
     } else if (res === 'dni_incorrecto') {
+      this.alumnoStateService.deleteAlumno();
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -71,6 +72,7 @@ export class EnviarNumeroExpedienteComponent {
     }
   },
   error: () => {
+    this.alumnoStateService.deleteAlumno();
     Swal.close();
     Swal.fire({
       icon: 'error',

@@ -2,7 +2,7 @@
 
 # Añadimos todas las librerias necesarias
 import hashlib
-from fastapi import File, HTTPException
+from fastapi import File, HTTPException, Request
 import oracledb as oracledb
 import pandas as pd
 import pdfplumber
@@ -11,6 +11,8 @@ from sklearn.preprocessing import StandardScaler
 
 # Funciones sobre la vista para probabilidades y machine learning
 
+#Cálculo de la media ponderada de los estudiantes en la vista V_CALIFICACIONES
+#curso_max es el curso donde el alumno se matriculó en la asignatura, por lo que nos interesa la media ponderada anterior a ese momento.
 def calcular_media_ponderada_vista(cur: oracledb.Cursor, codigo_alumno, curso_max):
     cur.execute("""
         SELECT 
@@ -28,7 +30,8 @@ def calcular_media_ponderada_vista(cur: oracledb.Cursor, codigo_alumno, curso_ma
         return (None, 0)  # Evitamos división por cero o falta de datos
     ponderada = (media * creditos) / 240
     return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
-    
+
+#Devuelve todos los alumnos matriculados en una asignatura enviada por parámetro y el curso académico en el que se matricularon.    
 def obtener_alumnos_matriculados(cur, nombre_asignatura):
         cur.execute("""
             SELECT DISTINCT CODIGOALUM, CURSOACADÉMICO
@@ -38,6 +41,7 @@ def obtener_alumnos_matriculados(cur, nombre_asignatura):
 
         return cur.fetchall()
 
+#Calcula la nota de corte de la asignatura enviada por parámetro
 def calcular_nota_corte(cur, nombre_asignatura):
     # 1. Obtener alumnos + curso académico donde cursaron esa asignatura
     alumnos_con_curso = obtener_alumnos_matriculados(cur, nombre_asignatura)
@@ -63,10 +67,13 @@ def calcular_nota_corte(cur, nombre_asignatura):
 
     return nota_corte_por_año  # Dict: { "2018-19": 6.25, "2019-20": 5.8, ... }
 
+#Calcula la probabilidad para un alumno de acceder a una asignatura, comprobando en cuantos años supera la nota de corte.
 def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     media = calcular_media_ponderada_alumno(cur, codigo_alumno)[0]
     if media is None:
         raise HTTPException(status_code=400, detail=f"No se ha podido calcular la media del alumno {codigo_alumno}")
+    #Esta funcionalidad reduce el coste computacional para casos que deberían entrar siempre,
+    #pero por no querer añadirlo como valor fijo en la base de datos, lo comento.
     # if media >=4:
     #     return 1
     
@@ -74,17 +81,27 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     if not notas_corte or len(notas_corte) == 0:
         raise HTTPException(status_code=400, detail=f"No hay datos históricos para la asignatura {nombre_asignatura}")
-
-    total = len(notas_corte)
-    supera = 0
     
+    probabilidad = 0.0
     for curso_acad, nota_corte in notas_corte.items():
-        if media > nota_corte: 
-            supera += 1
-    
-    probabilidad = (supera / total)
-    return probabilidad
+        
+            cur.execute("""
+            SELECT PESO
+            FROM PESO_PROBABILIDAD_ENTRADA
+            WHERE AÑO = :curso
+            """, curso = curso_acad)
 
+            result = cur.fetchone()
+            if result:
+                peso = result[0]
+                if media > nota_corte:
+                    probabilidad += peso
+            else:
+                continue
+
+    return (probabilidad * 100)
+
+#Crea el DataFrame a partir del cual se crearán los clusters.
 def crear_df(conn: oracledb.Connection):
     sql = """SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
 FROM (
@@ -107,15 +124,12 @@ WHERE rn = 1"""
     df = pd.read_sql(sql, conn)
     return df
 
+#Devuelve un DataFrame de 1 fila (index=CODIGOALUM) y columnas=columnas_matriz_base, con las notas del alumno alineadas a esas columnas. Rellena con 0 las que falten.
 def obtener_vector_alumno(
     conn: oracledb.Connection, 
     codigo_alumno: str, 
     columnas_matriz_base: list[str]
 ) -> pd.DataFrame:
-    """
-    Devuelve un DataFrame de 1 fila (index=CODIGOALUM) y columnas=columnas_matriz_base,
-    con las notas del alumno alineadas a esas columnas. Rellena con 0 las que falten.
-    """
     sql = """
     SELECT CODIGOALUM, REPLACE(NOMBREASIGNATURA, ' ', '') AS NOMBREASIGNATURA, NUM_CALIFICACIÓN
     FROM (
@@ -275,6 +289,7 @@ def extraer_tablas(pdf_path):
     return tables, lineas_extraidas[1], lineas_extraidas[4]
 
 # Rellena las asignaturas en una tabla, reemplazando None o valores vacíos por el último valor no vacío encontrado en la columna.
+#Al leer del PDF, si hay más de una entrada para una asignatura, solo pone el nombre en la primera calificación, así que la pongo también en el resto.
 def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
     "Reemplaza valores None o vacíos por el último valor no vacío encontrado en una columna."
     asignatura = ultima_asignatura
@@ -344,12 +359,14 @@ def limpiar_tablas_finales(tablas):
 
     return tablas_limpias
 
+#Ejecuta todas las funciones anteriores de lectura y limpieza del PDF, controlando también que los datos enviados son correctos.
+#TODO: En el frontend, el DNI se va a almacenar com SHA-256, por lo que hay que ver como adaptar bien el código.
 def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
     if not id or not dni:
         raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
 
     tablas, dni_pdf, id_pdf = extraer_tablas(pdf_path)
-    dni_pdf = dni_pdf[14:].strip().upper()
+    dni_pdf = hashlib.sha256(dni_pdf.strip().upper().encode()).hexdigest()
     id_pdf = id_pdf[14:].strip()
 
     # Comparar con lo que vino del frontend
@@ -377,9 +394,7 @@ def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
 def guardar_alumno_verificado(conn:oracledb.Connection, id_alumno: str, dni: str):
     # Crear hash del DNI en mayúsculas y sin espacios
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
-    print(f"[DEBUG] Guardando en ALUMNOS_VERIFICADOS → {id_alumno=} {dni=} {dni_hash=}")
 
-    
     cur = conn.cursor()
     cur.execute("""
         MERGE INTO ALUMNOS_VERIFICADOS a
@@ -584,11 +599,10 @@ def check_admin(conn: oracledb.Connection, user: str, password: str):
 def numero_consultas_titulaciones(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute("""
-            SELECT TITULACION, COUNT(*) AS TOTAL_CONSULTAS
-            FROM ADMIN_INFO
-            GROUP BY TITULACION
+            SELECT vt.NOMBRE, COUNT(*) AS TOTAL_CONSULTAS
+            FROM ADMIN_INFO ai JOIN V_TITULACION vt on ai.titulacion = vt.codigo
+            GROUP BY vt.nombre
             ORDER BY TOTAL_CONSULTAS DESC
-            FETCH FIRST 5 ROWS ONLY
             """)
     titulaciones = cur.fetchall()
     print(titulaciones)
@@ -606,7 +620,6 @@ def asignaturas_populares(conn: oracledb.Connection):
         FROM ADMIN_INFO
         GROUP BY NOMBREASIGNATURA
         ORDER BY TOTAL_CONSULTAS DESC
-        FETCH FIRST 5 ROWS ONLY
     """)
     asignaturas = cur.fetchall()
     cur.close()
@@ -623,7 +636,6 @@ def asignaturas_afinidad(conn: oracledb.Connection):
         FROM ADMIN_INFO
         GROUP BY NOMBREASIGNATURA
         ORDER BY AFINIDAD_MEDIA DESC
-        FETCH FIRST 5 ROWS ONLY
     """)
     asignaturas = cur.fetchall()
     cur.close()
@@ -641,7 +653,6 @@ def asignaturas_probabilidad(conn: oracledb.Connection):
         FROM ADMIN_INFO
         GROUP BY NOMBREASIGNATURA
         ORDER BY PROB_MEDIA DESC
-        FETCH FIRST 5 ROWS ONLY
     """)
     asignaturas = cur.fetchall()
     cur.close()
@@ -712,3 +723,21 @@ def obtener_asignatura_sin_normalizar(conn: oracledb.Connection, asignatura: str
     asignatura = resultado[0]
 
     return asignatura
+
+def reiniciar_clusters(conn: oracledb.Connection, request:Request):
+    app = request.app
+    df = crear_df(conn)
+    df["NUM_CALIFICACIÓN"] = (
+        df["NUM_CALIFICACIÓN"]
+        .astype(str)
+        .str.replace(",", ".", regex=False)
+    )
+    df["NUM_CALIFICACIÓN"] = pd.to_numeric(df["NUM_CALIFICACIÓN"], errors="coerce")
+    modelo, scaler, matriz, df_clusters = entrenar_clustering(df)
+    app.state.df = df
+    app.state.modelo = modelo
+    app.state.scaler = scaler
+    app.state.matriz = matriz
+    app.state.df_clusters = df_clusters
+
+    return True

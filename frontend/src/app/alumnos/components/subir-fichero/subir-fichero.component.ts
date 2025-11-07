@@ -24,7 +24,7 @@ export class SubirFicheroComponent {
 
   @Output() datosExtraidos = new EventEmitter<AsignaturaNota[]>();
 
- 
+
   dni = this.alumnoStateService.getDni();
 
   onFileSelected(event: Event) {
@@ -39,11 +39,12 @@ export class SubirFicheroComponent {
           this.router.navigate([`/alumno/${this.alumnoId}`]);
         },
         error: (err) => {
+          this.alumnoStateService.deleteAlumno();
           Swal.fire('Error', err.error.detail || 'No se pudo procesar el PDF.', 'error');
         }
       });
     }
-  } 
+  }
 }
 
 

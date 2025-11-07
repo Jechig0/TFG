@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '@environments/environment';
 import { AsignaturaCount, AsignaturaCountRaw } from '../interfaces/adminResponse.interface';
 
@@ -33,5 +33,17 @@ export class AdminService {
   getTitulaciones(): Observable<AsignaturaCount[]> {
     return this.http.get<AsignaturaCountRaw[]>(`${this.baseUrl}/admin/titulaciones`)
       .pipe(map(this.transformResponse));
+  }
+
+  resetClusters(): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.baseUrl}/admin/reiniciar_clusters`, {});
+  }
+
+  setPonderaciones(ponderaciones: {
+    expediente: number;
+    historial: number;
+    demanda: number;
+  }): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.baseUrl}/admin/ponderaciones`, ponderaciones);
   }
 }

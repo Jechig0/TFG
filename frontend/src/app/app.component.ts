@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import { NavbarComponent } from "./alumnos/components/navbar/navbar.component";
 
 @Component({
@@ -10,4 +10,10 @@ import { NavbarComponent } from "./alumnos/components/navbar/navbar.component";
 })
 export class AppComponent {
   title = 'tfg-front';
+  router = inject(Router);
+
+  showNavbar(): boolean {
+    const currentRoute = this.router.url;
+    return currentRoute !== '/admin';
+  }
 }

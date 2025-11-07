@@ -62,6 +62,7 @@ def get_asignaturas_probabilidad(request: Request):
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))
 
+#TODO: hacer endpoint para reiniciar datos de la tabla de informes también.
 @adminRouter.get("/seed")
 def reiniciar_database(request: Request):
     pool = request.app.state.pool
@@ -70,3 +71,13 @@ def reiniciar_database(request: Request):
     if seed is False:
         raise HTTPException(status_code=400, detail="Error al borrar la base de datos")
     return JSONResponse(status_code=200, content="SEED EXECUTED")
+
+@adminRouter.post("/reiniciar_clusters")
+def reiniciar_clusters(request: Request):
+    pool = request.app.state.pool
+    df = request.app.state.df
+    with pool.acquire() as conn:
+        resultado = funciones.reiniciar_clusters(conn, request)
+    if resultado is False:
+        raise HTTPException(status_code=400, detail="Error al reiniciar los clusters")
+    return JSONResponse(status_code=200, content={"message": "Clusters reiniciados correctamente"})
