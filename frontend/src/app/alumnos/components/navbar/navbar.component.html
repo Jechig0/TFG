@@ -41,7 +41,12 @@
   <!-- Menú desktop -->
   <div class="hidden md:flex flex-none items-center space-x-2">
     <a class="btn btn-ghost" routerLink="/" routerLinkActive="btn-active" (click)="this.router.navigate(['/'])">Inicio</a>
-    <a class="btn btn-ghost" routerLink="/alumno" routerLinkActive="btn-active" (click)="this.router.navigate(['/alumno'])">Alumno</a>
+    @if (alumnoStateService.getId() == null) {
+      <a class="btn btn-ghost" routerLink="/alumno" routerLinkActive="btn-active" (click)="this.router.navigate(['/alumno'])">Alumno</a>
+      } @else {
+      <a class="btn btn-ghost" routerLink="/alumno" routerLinkActive="btn-active" (click)="this.router.navigate([`/alumno/${alumnoStateService.getId()}`])">Alumno</a>
+    }
+
     <a class="btn btn-ghost" routerLink="/faq" routerLinkActive="btn-active" (click)="this.router.navigate(['/faq'])">FAQ</a>
     <!-- Login admin (visible siempre) -->
     <!-- Panel admin (solo si isAdmin) -->

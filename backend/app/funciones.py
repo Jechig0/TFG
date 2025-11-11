@@ -99,7 +99,7 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
             else:
                 continue
 
-    return (probabilidad * 100)
+    return (probabilidad)
 
 #Crea el DataFrame a partir del cual se crearán los clusters.
 def crear_df(conn: oracledb.Connection):
@@ -273,7 +273,7 @@ def predecir_afinidad_cluster(
 #Saco del PDF todas las notas, el DNI y el número de expediente del alumno.
 def extraer_tablas(pdf_path):
     tables = []
-    lineas_extraidas = []
+    lineas_extraidas: list[str] = []
 
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages):
@@ -366,11 +366,15 @@ def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
         raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
 
     tablas, dni_pdf, id_pdf = extraer_tablas(pdf_path)
+    dni_pdf = dni_pdf[14:].strip()
+    print(f"[DEBUG] ID extraído del PDF: {dni_pdf}")
     dni_pdf = hashlib.sha256(dni_pdf.strip().upper().encode()).hexdigest()
+    print(f"[DEBUG] DNI extraído del PDF (hash): {dni_pdf}")
+    print(f"[DEBUG] DNI enviado desde frontend (hash): {dni.strip()}")
     id_pdf = id_pdf[14:].strip()
 
     # Comparar con lo que vino del frontend
-    if dni.strip().upper() != dni_pdf:
+    if dni.strip() != dni_pdf:
         raise HTTPException(status_code=400, detail="El DNI no coincide con el PDF")
     if id.strip().upper() != id_pdf:
         raise HTTPException(status_code=400, detail="El ID no coincide con el PDF")
@@ -393,7 +397,6 @@ def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
 
 def guardar_alumno_verificado(conn:oracledb.Connection, id_alumno: str, dni: str):
     # Crear hash del DNI en mayúsculas y sin espacios
-    dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
 
     cur = conn.cursor()
     cur.execute("""
@@ -404,8 +407,7 @@ def guardar_alumno_verificado(conn:oracledb.Connection, id_alumno: str, dni: str
             UPDATE SET a.DNI_HASH = src.DNI_HASH
         WHEN NOT MATCHED THEN
             INSERT (CODIGOALUM, DNI_HASH) VALUES (src.CODIGOALUM, src.DNI_HASH)
-    """, id_alumno=id_alumno, dni_hash=dni_hash)
-    print(f"[DEBUG] Filas afectadas: {cur.rowcount}")
+    """, id_alumno=id_alumno, dni_hash=dni)
 
     conn.commit()
     return True
@@ -423,6 +425,7 @@ def existe_alumno(conn:oracledb.Connection, id_alumno:str, dni:str) -> bool:
     
     
 def verificar_alumno(conn:oracledb.Connection, id_alumno: str, dni: str) -> bool:
+    print(f"[DEBUG] Verificando alumno {id_alumno} con DNI hash {dni.strip()}")
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
     
     cur = conn.cursor()
@@ -605,7 +608,6 @@ def numero_consultas_titulaciones(conn: oracledb.Connection):
             ORDER BY TOTAL_CONSULTAS DESC
             """)
     titulaciones = cur.fetchall()
-    print(titulaciones)
     cur.close()
     
     if not titulaciones:
@@ -740,4 +742,38 @@ def reiniciar_clusters(conn: oracledb.Connection, request:Request):
     app.state.matriz = matriz
     app.state.df_clusters = df_clusters
 
+    return True
+
+def get_ponderaciones(conn: oracledb.Connection):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT AÑO, PESO
+        FROM PESO_PROBABILIDAD_ENTRADA
+        ORDER BY AÑO ASC
+    """)
+    ponderaciones = cur.fetchall()
+    cur.close()
+    
+    if not ponderaciones:
+        return []
+    
+    return ponderaciones
+
+
+def set_ponderaciones(conn: oracledb.Connection, ponderaciones: list):
+    cur = conn.cursor()
+    for valor in ponderaciones:
+        cur.execute("""
+            MERGE INTO PESO_PROBABILIDAD_ENTRADA dest
+            USING (SELECT :año AS AÑO, :peso AS PESO FROM dual) src
+            ON (dest.AÑO = src.AÑO)
+            WHEN MATCHED THEN
+                UPDATE SET dest.PESO = src.PESO
+            WHEN NOT MATCHED THEN
+                INSERT (AÑO, PESO)
+                VALUES (src.AÑO, src.PESO)
+        """, año=valor['year'], peso=valor['peso'])
+    conn.commit()
+    cur.close()
+    
     return True

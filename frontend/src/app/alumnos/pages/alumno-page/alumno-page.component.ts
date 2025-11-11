@@ -57,4 +57,20 @@ export class AlumnoPageComponent {
       }
     });
   }
+  logout() {
+    Swal.fire({
+          title: 'Cerrar sesión',
+          text: 'Pulsa Confirmar para cerrar sesión.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar',
+          cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sessionStorage.clear();
+        this.router.navigate(['/']);
+      }
+    });
+    ;
+  }
 }

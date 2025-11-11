@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '@environments/environment';
-import { AsignaturaCount, AsignaturaCountRaw } from '../interfaces/adminResponse.interface';
+import { AsignaturaCount, AsignaturaCountRaw, Ponderacion } from '../interfaces/adminResponse.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -39,11 +39,14 @@ export class AdminService {
     return this.http.post<{message: string}>(`${this.baseUrl}/admin/reiniciar_clusters`, {});
   }
 
-  setPonderaciones(ponderaciones: {
-    expediente: number;
-    historial: number;
-    demanda: number;
-  }): Observable<{message: string}> {
-    return this.http.post<{message: string}>(`${this.baseUrl}/admin/ponderaciones`, ponderaciones);
+  getPonderaciones(): Observable<Ponderacion[]> {
+    return this.http.get<[string, number][]>(`${this.baseUrl}/admin/get_ponderaciones`)
+    .pipe(
+      map(arr => arr.map(([year, peso]) => ({ year, peso })))
+    );
+  }
+
+  setPonderaciones(payload: { ponderaciones: { year: string; peso: number }[] }): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.baseUrl}/admin/set_ponderaciones`, payload)
   }
 }

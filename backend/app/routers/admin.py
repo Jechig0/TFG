@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from models.PonderacionPayload import PonderacionPayload
 import funciones as funciones
 
 
@@ -81,3 +82,34 @@ def reiniciar_clusters(request: Request):
     if resultado is False:
         raise HTTPException(status_code=400, detail="Error al reiniciar los clusters")
     return JSONResponse(status_code=200, content={"message": "Clusters reiniciados correctamente"})
+
+@adminRouter.get("/get_ponderaciones")
+def get_años(request: Request):
+    pool = request.app.state.pool
+    with pool.acquire() as conn:
+        años = funciones.get_ponderaciones(conn)
+    if años == []:
+        raise HTTPException(status_code=400, detail="No se han encontrado años disponibles")
+    return JSONResponse(status_code=200, content=jsonable_encoder(años))
+
+@adminRouter.post("/set_ponderaciones")
+def set_ponderaciones(request: Request, payload: dict):
+    pool = request.app.state.pool
+    ponderaciones = payload.get("ponderaciones")
+    if not ponderaciones:
+        raise HTTPException(status_code=400, detail="No se han proporcionado los datos necesarios")
+    total = 0.0
+    for item in ponderaciones:
+        if item['peso'] < 0 or item['peso'] > 1:
+            raise HTTPException(status_code=400, detail=f"Peso inválido para {item['year']}")
+        total += float(item['peso'])
+
+    if total > 1 + 0.000001 or total < 1 - 0.000001:  # tolerancia
+        raise HTTPException(status_code=400, detail=f"La suma de pesos ({total}) excede 1")
+    
+    with pool.acquire() as conn:
+        resultado = funciones.set_ponderaciones(conn, ponderaciones)
+    if resultado is False:
+        raise HTTPException(status_code=400, detail="Error al establecer las ponderaciones")
+    
+    return JSONResponse(status_code=200, content={"message": "Ponderaciones establecidas correctamente"})

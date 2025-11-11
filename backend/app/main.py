@@ -74,3 +74,7 @@ app.include_router(adminRouter)
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse(url='/docs')
+
+@app.get("/health", include_in_schema=False)
+def health_check():
+    return {"status": "ok"}

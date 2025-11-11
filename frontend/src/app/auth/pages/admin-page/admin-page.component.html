@@ -82,23 +82,36 @@
                         } @else if (asignaturasPopularesResource.error()) {
                             <div class="text-red-500">Error al cargar los datos</div>
                         } @else {
-                            <div class="overflow-x-auto">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Asignatura</th>
-                                            <th>Consultas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (item of asignaturasPopularesResource.value(); track $index) {
+                            <div class="flex flex-col gap-6">
+                                <div class="overflow-x-auto">
+                                    <table class="table">
+                                        <thead>
                                             <tr>
-                                                <td>{{item.nombre}}</td>
-                                                <td>{{item.count}}</td>
+                                                <th>Asignatura</th>
+                                                <th>Consultas</th>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @for (item of asignaturasPopularesResource.value(); track $index) {
+                                                <tr>
+                                                    <td>{{item.nombre}}</td>
+                                                    <td>{{item.count}}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg">
+                                    @if (asignaturasPopularesResource.value()!.length > 0) {
+                                        <canvas baseChart
+                                            [type]="'bar'"
+                                            [data]="getChartData(asignaturasPopularesResource.value())"
+                                            [options]="chartOptions">
+                                        </canvas>
+                                    } @else {
+                                        <p class="text-center text-gray-500">No hay datos disponibles para mostrar</p>
+                                    }
+                                </div>
                             </div>
                         }
                     </div>
@@ -113,23 +126,32 @@
                         } @else if (asignaturasAfinidadResource.error()) {
                             <div class="text-red-500">Error al cargar los datos</div>
                         } @else {
-                            <div class="overflow-x-auto">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Asignatura</th>
-                                            <th>Consultas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (item of asignaturasAfinidadResource.value(); track $index) {
+                            <div class="flex flex-col gap-6">
+                                <div class="overflow-x-auto">
+                                    <table class="table">
+                                        <thead>
                                             <tr>
-                                                <td>{{item.nombre}}</td>
-                                                <td>{{item.count}}</td>
+                                                <th>Asignatura</th>
+                                                <th>Afinidad media</th>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @for (item of asignaturasAfinidadResource.value(); track $index) {
+                                                <tr>
+                                                    <td>{{item.nombre}}</td>
+                                                    <td>{{item.count}}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg">
+                                    <canvas baseChart
+                                        [type]="'pie'"
+                                        [data]="getChartData(asignaturasAfinidadResource.value())"
+                                        [options]="chartOptions">
+                                    </canvas>
+                                </div>
                             </div>
                         }
                     </div>
@@ -144,23 +166,32 @@
                         } @else if (asignaturasProbabilidadResource.error()) {
                             <div class="text-red-500">Error al cargar los datos</div>
                         } @else {
-                            <div class="overflow-x-auto">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Asignatura</th>
-                                            <th>Consultas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (item of asignaturasProbabilidadResource.value(); track $index) {
+                            <div class="flex flex-col gap-6">
+                                <div class="overflow-x-auto">
+                                    <table class="table">
+                                        <thead>
                                             <tr>
-                                                <td>{{item.nombre}}</td>
-                                                <td>{{item.count}}</td>
+                                                <th>Asignatura</th>
+                                                <th>Probabilidad media</th>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @for (item of asignaturasProbabilidadResource.value(); track $index) {
+                                                <tr>
+                                                    <td>{{item.nombre}}</td>
+                                                    <td>{{item.count}}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg">
+                                    <canvas baseChart
+                                        [type]="'doughnut'"
+                                        [data]="getChartData(asignaturasProbabilidadResource.value())"
+                                        [options]="chartOptions">
+                                    </canvas>
+                                </div>
                             </div>
                         }
                     </div>
@@ -175,23 +206,32 @@
                         } @else if (titulacionesResource.error()) {
                             <div class="text-red-500">Error al cargar los datos</div>
                         } @else {
-                            <div class="overflow-x-auto">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Titulación</th>
-                                            <th>Consultas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (item of titulacionesResource.value(); track $index) {
+                            <div class="flex flex-col gap-6">
+                                <div class="overflow-x-auto">
+                                    <table class="table">
+                                        <thead>
                                             <tr>
-                                                <td>{{item.nombre}}</td>
-                                                <td>{{item.count}}</td>
+                                                <th>Titulación</th>
+                                                <th>Consultas</th>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @for (item of titulacionesResource.value(); track $index) {
+                                                <tr>
+                                                    <td>{{item.nombre}}</td>
+                                                    <td>{{item.count}}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg">
+                                    <canvas baseChart
+                                        [type]="'bar'"
+                                        [data]="getChartData(titulacionesResource.value())"
+                                        [options]="chartOptions">
+                                    </canvas>
+                                </div>
                             </div>
                         }
                     </div>
@@ -214,47 +254,44 @@
 
                         <!-- Ponderaciones -->
                         <div class="mb-8">
-                            <h3 class="text-xl font-semibold mb-4">Ponderaciones de Probabilidad</h3>
-                            <div class="grid gap-4 max-w-md">
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text">Expediente (%)</span>
-                                    </label>
-                                    <input type="number"
-                                           class="input input-bordered"
-                                           [(ngModel)]="ponderaciones.expediente"
-                                           min="0"
-                                           max="1"
-                                           step="0.1"/>
-                                </div>
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text">Historial (%)</span>
-                                    </label>
-                                    <input type="number"
-                                           class="input input-bordered"
-                                           [(ngModel)]="ponderaciones.historial"
-                                           min="0"
-                                           max="1"
-                                           step="0.1"/>
-                                </div>
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text">Demanda (%)</span>
-                                    </label>
-                                    <input type="number"
-                                           class="input input-bordered"
-                                           [(ngModel)]="ponderaciones.demanda"
-                                           min="0"
-                                           max="1"
-                                           step="0.1"/>
-                                </div>
-                                <button
-                                    class="btn btn-primary mt-4"
-                                    (click)="updatePonderaciones()">
-                                    Actualizar Ponderaciones
-                                </button>
+                          <h3 class="text-xl font-semibold mb-4">Valor de los años en la probabilidad de entrada</h3>
+
+                          @if (getPonderacionesResource.isLoading()) {
+                            <div class="flex justify-center items-center py-12">
+                              <span class="loading loading-spinner loading-lg"></span>
                             </div>
+                          }
+
+                          @if (getPonderacionesResource.error()) {
+                            <div class="text-red-600">Error al cargar ponderaciones</div>
+                          }
+
+                          @if (ponderaciones().length > 0) {
+                            <div class="space-y-4">
+                              @for (p of ponderaciones(); track p.year) {
+                                <div class="flex items-center gap-4">
+                            <label class="w-32">{{ p.year }}</label>
+
+                            <input
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.01"
+                              [(ngModel)]="editingMap()[p.year]"
+                              class="input input-bordered w-32"
+                            />
+
+                            <div class="text-sm text-gray-500">Actual: <span class="font-medium">{{ p.peso }}</span></div>
+                          </div>
+                        }
+                      </div>
+
+                      <div class="mt-6 flex gap-2">
+                        <button class="btn btn-primary" (click)="guardarTodas()">Actualizar</button>
+                      </div>
+                    } @else {
+                      <div class="text-gray-500">No hay ponderaciones para editar.</div>
+                    }
                         </div>
                     </div>
                 }

@@ -99,7 +99,7 @@ def get_afinidad(alumnoId: str, asignatura: str, request: Request):
 @alumnoRouter.post("/verificar")
 def verificar_alumno(payload: VerificarAlumnoPayload, request: Request):
     id_alumno = payload.id_alumno.strip()
-    dni = payload.dni.strip().upper()
+    dni = payload.dni.strip()
     
     if not id_alumno or not dni:
         raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
@@ -115,7 +115,7 @@ def verificar_alumno(payload: VerificarAlumnoPayload, request: Request):
         valido = funciones.verificar_alumno(conn, id_alumno, dni)
 
         if not valido:
-            return JSONResponse(status_code=200, content={"estado": "dni_incorrecto"})  # Está registrado pero el DNI no coincide
+            return JSONResponse(status_code=400, content={"estado": "dni_incorrecto"})  # Está registrado pero el DNI no coincide
 
         # 2. Comprobar si tiene notas en informes_alumno
         return JSONResponse(status_code=200, content={"estado": "existente"})  # Tiene notas y el DNI es correcto

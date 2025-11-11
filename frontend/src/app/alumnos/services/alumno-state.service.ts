@@ -18,11 +18,6 @@ export class AlumnoStateService {
     return sessionStorage.getItem("dni");
   }
 
-  deleteAlumno(){
-    sessionStorage.removeItem("id_alumno");
-    sessionStorage.removeItem("dni");
-  }
-
   clear() {
     sessionStorage.removeItem("id_alumno");
     sessionStorage.removeItem("dni");

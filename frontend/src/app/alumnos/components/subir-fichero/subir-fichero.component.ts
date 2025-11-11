@@ -36,11 +36,13 @@ export class SubirFicheroComponent {
         next: (resp) => {
           Swal.fire('Éxito', 'Expediente cargado correctamente.', 'success');
           this.datosExtraidos.emit(resp);
+          this.alumnoStateService.setAlumno(this.alumnoId!, this.dni!);
           this.router.navigate([`/alumno/${this.alumnoId}`]);
         },
         error: (err) => {
-          this.alumnoStateService.deleteAlumno();
+          this.alumnoStateService.clear();
           Swal.fire('Error', err.error.detail || 'No se pudo procesar el PDF.', 'error');
+          this.router.navigate([`/`]);
         }
       });
     }
