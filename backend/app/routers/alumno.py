@@ -10,8 +10,8 @@ from fastapi.params import Form
 from fastapi.responses import JSONResponse
 import oracledb
 import pandas as pd
-import funciones as funciones
-from models.VerificarAlumnoPayload import VerificarAlumnoPayload
+import app.funciones as funciones
+from app.models.VerificarAlumnoPayload import VerificarAlumnoPayload
 
 #Creamos el router para las rutas de alumnos, colocando el prefijo "/alumno" para todas las rutas
 alumnoRouter = APIRouter(prefix="/alumno", tags=["Alumno"])

@@ -4,11 +4,11 @@ import pandas as pd
 import oracledb as oracledb
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-import funciones 
+from app import funciones
 from fastapi.middleware.cors import CORSMiddleware
-from routers.alumno import alumnoRouter
-from routers.asignatura import asignaturaRouter
-from routers.admin import adminRouter
+from app.routers.alumno import alumnoRouter
+from app.routers.asignatura import asignaturaRouter
+from app.routers.admin import adminRouter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

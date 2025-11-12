@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from models.PonderacionPayload import PonderacionPayload
-import funciones as funciones
+import app.funciones as funciones
 
 
 adminRouter = APIRouter(prefix="/admin", tags=["Admin"])

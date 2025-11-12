@@ -4,7 +4,7 @@
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, HTTPException, Request
-import funciones as funciones
+import app.funciones as funciones
 
 #Creamos el router para las rutas de asignaturas, colocando el prefijo "/asignatura" para todas las rutas
 asignaturaRouter = APIRouter(prefix="/asignatura", tags=["Asignatura"])
