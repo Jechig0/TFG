@@ -1,8 +1,17 @@
-import { Component } from '@angular/core';
+import { AdminService } from '@/auth/services/admin.service';
+import { Component, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-faq-page',
   imports: [],
   templateUrl: './faq-page.component.html',
 })
-export class FaqPageComponent { }
+export class FaqPageComponent {
+
+  adminService = inject(AdminService);
+
+  getPonderacionesResource = rxResource({
+    loader: () => this.adminService.getPonderaciones()
+  })
+}

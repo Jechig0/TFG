@@ -76,11 +76,13 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     #pero por no querer añadirlo como valor fijo en la base de datos, lo comento.
     # if media >=4:
     #     return 1
-    
+    print(media)
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     if not notas_corte or len(notas_corte) == 0:
         raise HTTPException(status_code=400, detail=f"No hay datos históricos para la asignatura {nombre_asignatura}")
+    
+    print(notas_corte)
     
     probabilidad = 0.0
     for curso_acad, nota_corte in notas_corte.items():

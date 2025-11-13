@@ -1,1 +1,6 @@
 .env
+/backend/app/visual.ipynb
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

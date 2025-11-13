@@ -110,6 +110,42 @@
           </ul>
         </div>
       </div>
+      <div id="error" class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="calculo-accordion" />
+        <div class="collapse-title text-xl font-medium">
+          La aplicación me ha dado un resultado inesperado, ¿qué hago?
+        </div>
+        <div class="collapse-content">
+          <p>Si eres estudiante del plan de estudios de 2023, es posible que no haya datos disponibles para algunas asignaturas que se ofertan actualmente. Por favor, ten paciencia mientras recopilamos más información.</p>
+        </div>
+      </div>
+      <div id="pesos" class="collapse collapse-arrow join-item border border-base-300">
+        <input type="radio" name="calculo-accordion" />
+        <div class="collapse-title text-xl font-medium">
+          ¿Cuánto influye cada curso?
+        </div>
+        <div class="collapse-content">
+          <p>Estos pesos pueden modificarse al añadir años a los datos de la aplicación y son modificables por los administradores. Actualmente son:</p>
+          @if (getPonderacionesResource.isLoading()) {
+              <div class="flex justify-center items-center py-12">
+                  <span class="loading loading-spinner loading-lg"></span>
+              </div>
+               }
+          @if (getPonderacionesResource.error()) {
+            <div class="text-red-600">Error al cargar ponderaciones</div>
+          }
+
+          @if (getPonderacionesResource.hasValue()) {
+            <div class="space-y-4">
+              @for (p of getPonderacionesResource.value(); track p.year) {
+                <div>
+                  <strong>Curso {{p.year}}:</strong> {{p.peso}}%
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
     </div>
   </div>
 
