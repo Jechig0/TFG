@@ -13,7 +13,6 @@ export class FilterByTextPipe implements PipeTransform {
     const lower = search.toLowerCase();
     return asignaturas.filter(asignatura =>
       asignatura.toLowerCase().includes(lower)
-);
-
+    );
   }
 }

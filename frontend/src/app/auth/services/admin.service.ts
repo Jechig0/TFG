@@ -39,6 +39,14 @@ export class AdminService {
     return this.http.post<{message: string}>(`${this.baseUrl}/admin/reiniciar_clusters`, {});
   }
 
+  resetExpedientes(): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.baseUrl}/admin/reset_expedientes`, {});
+  }
+
+  resetConsultas(): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.baseUrl}/admin/reset_consultas`, {});
+  }
+
   getPonderaciones(): Observable<Ponderacion[]> {
     return this.http.get<[string, number][]>(`${this.baseUrl}/admin/get_ponderaciones`)
     .pipe(

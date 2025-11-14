@@ -17,6 +17,7 @@ type ViewType = 'populares' | 'afinidad' | 'probabilidad' | 'titulaciones' | 'co
   templateUrl: './admin-page.component.html',
 })
 export class AdminPageComponent {
+
   private adminService = inject(AdminService);
   private router = inject(Router);
 
@@ -202,6 +203,57 @@ export class AdminPageComponent {
           Swal.fire({ icon: 'error', title: 'Error', text: String(msg) });
         }
       });
+    });
+  }
+
+  resetConsultas() {
+    Swal.fire({
+      title: 'Borrar Consultas',
+      text: '¿Está seguro de que quiere borrar la información de todas las consultas almacenadas? Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.isResetting.set(true);
+        this.adminService.resetConsultas().subscribe({
+          next: () => {
+            Swal.fire('Éxito', 'Los datos de consultas han sido borrados', 'success');
+          },
+          error: () => {
+            Swal.fire('Error', 'No se pudieron borrar los datos de consultas', 'error');
+          },
+          complete: () => {
+            this.isResetting.set(false);
+          }
+        });
+      }
+    });
+  }
+  resetExpedientes() {
+    Swal.fire({
+      title: 'Borrar Expedientes',
+      text: '¿Está seguro de que quiere eliminar todos los expedientes de la base de datos? Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.isResetting.set(true);
+        this.adminService.resetExpedientes().subscribe({
+          next: () => {
+            Swal.fire('Éxito', 'Los expedientes han sido borrados', 'success');
+          },
+          error: () => {
+            Swal.fire('Error', 'No se pudieron borrar los expedientes', 'error');
+          },
+          complete: () => {
+            this.isResetting.set(false);
+          }
+        });
+      }
     });
   }
 

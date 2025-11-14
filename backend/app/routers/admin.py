@@ -27,8 +27,8 @@ def get_titulaciones(request: Request):
     pool = request.app.state.pool
     with pool.acquire() as conn:
         titulaciones = funciones.numero_consultas_titulaciones(conn)
-    if titulaciones == []:
-        raise HTTPException(status_code=400, detail='No hay consultas registradas actualmente en la base de datos.')
+    # if titulaciones == []:
+    #     raise HTTPException(status_code=400, detail='No hay consultas registradas actualmente en la base de datos.')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(titulaciones))
 
@@ -37,8 +37,8 @@ def get_asignaturas_populares(request: Request):
     pool = request.app.state.pool
     with pool.acquire() as conn:
         asignaturas = funciones.asignaturas_populares(conn)
-    if asignaturas == []:
-        raise HTTPException(status_code=400, detail='No se han encontrado asignaturas populares.')
+    # if asignaturas == []:
+    #     raise HTTPException(status_code=400, detail='No se han encontrado asignaturas populares.')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))
 
@@ -47,8 +47,8 @@ def get_asignaturas_afinidad(request: Request):
     pool = request.app.state.pool
     with pool.acquire() as conn:
         asignaturas = funciones.asignaturas_afinidad(conn)
-    if asignaturas == []:
-        raise HTTPException(status_code=400, detail='No se han encontrado asignaturas con afinidad.')
+    # if asignaturas == []:
+    #     raise HTTPException(status_code=400, detail='No se han encontrado asignaturas con afinidad.')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))
 
@@ -57,20 +57,10 @@ def get_asignaturas_probabilidad(request: Request):
     pool = request.app.state.pool
     with pool.acquire() as conn:
         asignaturas = funciones.asignaturas_probabilidad(conn)
-    if asignaturas == []:
-        raise HTTPException(status_code=400, detail='No se han encontrado asignaturas con probabilidad de acceso.')
+    # if asignaturas == []:
+    #     raise HTTPException(status_code=400, detail='No se han encontrado asignaturas con probabilidad de acceso.')
     
     return JSONResponse(status_code=200, content=jsonable_encoder(asignaturas))
-
-#TODO: hacer endpoint para reiniciar datos de la tabla de informes también.
-@adminRouter.get("/seed")
-def reiniciar_database(request: Request):
-    pool = request.app.state.pool
-    with pool.acquire() as conn:
-        seed = funciones.reiniciar_admin_db(conn)
-    if seed is False:
-        raise HTTPException(status_code=400, detail="Error al borrar la base de datos")
-    return JSONResponse(status_code=200, content="SEED EXECUTED")
 
 @adminRouter.post("/reiniciar_clusters")
 def reiniciar_clusters(request: Request):
@@ -112,3 +102,21 @@ def set_ponderaciones(request: Request, payload: dict):
         raise HTTPException(status_code=400, detail="Error al establecer las ponderaciones")
     
     return JSONResponse(status_code=200, content={"message": "Ponderaciones establecidas correctamente"})
+
+@adminRouter.post("/reset_consultas")
+def borrar_consultas(request: Request):
+    pool = request.app.state.pool
+    with pool.acquire() as conn:
+        seed = funciones.borrar_consultas(conn)
+    if seed is False:
+        raise HTTPException(status_code=400, detail="Error al borrar la base de datos")
+    return JSONResponse(status_code=200, content="Consultas borradas correctamente")
+
+@adminRouter.post("/reset_expedientes")
+def borrar_expedientes(request: Request):
+    pool = request.app.state.pool
+    with pool.acquire() as conn:
+        seed = funciones.borrar_expedientes(conn)
+    if seed is False:
+        raise HTTPException(status_code=400, detail="Error al borrar la base de datos")
+    return JSONResponse(status_code=200, content="SEED EXECUTED")

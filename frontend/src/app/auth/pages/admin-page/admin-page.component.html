@@ -250,6 +250,22 @@
                                 <i class="fa-solid fa-rotate mr-2"></i>
                                 {{ isResetting() ? 'Reiniciando...' : 'Reiniciar Clusters' }}
                             </button>
+                            <h3 class="text-xl font-semibold mb-4">Borrado de expedientes de alumnos</h3>
+                            <button
+                                class="btn bg-red-700 hover:bg-red-800 text-white"
+                                (click)="resetExpedientes()"
+                                [disabled]="isResetting()">
+                                <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                                {{ isResetting() ? 'Borrando...' : 'Borrar Expedientes' }}
+                            </button>
+                            <h3 class="text-xl font-semibold mb-4">Borrado de informes de consultas</h3>
+                            <button
+                                class="btn bg-red-700 hover:bg-red-800 text-white"
+                                (click)="resetConsultas()"
+                                [disabled]="isResetting()">
+                                <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                                {{ isResetting() ? 'Borrando...' : 'Borrar Consultas' }}
+                            </button>
                         </div>
 
                         <!-- Ponderaciones -->

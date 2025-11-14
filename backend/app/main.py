@@ -75,6 +75,7 @@ app.include_router(adminRouter)
 def root():
     return RedirectResponse(url='/docs')
 
+#Endpoint de salud para verificar que la API está funcionando correctamente
 @app.get("/health", include_in_schema=False)
 def health_check():
     return {"status": "ok"}

@@ -703,10 +703,20 @@ def insertar_probabilidad_alumno(conn: oracledb.Connection, alumno_id: str, asig
     
     return True
 
-def reiniciar_admin_db(conn: oracledb.Connection):
+def borrar_consultas(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute(""" 
                 DELETE FROM ADMIN_INFO
+                """)
+    conn.commit()
+    cur.close()
+    
+    return True
+
+def borrar_expedientes(conn: oracledb.Connection):
+    cur = conn.cursor()
+    cur.execute(""" 
+                DELETE FROM INFORMES_ALUMNO
                 """)
     conn.commit()
     cur.close()
