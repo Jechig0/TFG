@@ -50,13 +50,11 @@ export class AlumnosService {
   }
 
   verificarAlumno(id: string, dni:string): Observable<string>{
-    const res = JSON.stringify({"id_alumno":id, "dni": dni})
-    console.log(id, dni)
     return this.http.post<{estado: string}>(`${this.apiUrl}/alumno/verificar`, {
       id_alumno: id.trim(),
       dni: dni.trim().toUpperCase()
-}).pipe(
-    map(response => response.estado)
+    }).pipe(
+      map(response => response.estado)
 );
 
 
@@ -65,7 +63,7 @@ export class AlumnosService {
   getAsignaturas(id: string): Observable<string[][]>{
     return this.http.get<string[][]>(`${this.apiUrl}/asignatura/${id}`);
   }
-  
+
   getProbabilidadAcceso(id:string, asignatura: string): Observable<number>{
     asignatura = asignatura.replace(/\s+/g, '')
     return this.http.get<number>(`${this.apiUrl}/alumno/probabilidadEntrada/${id}/${asignatura}`)
