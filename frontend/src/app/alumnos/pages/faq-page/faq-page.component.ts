@@ -11,6 +11,7 @@ export class FaqPageComponent {
 
   adminService = inject(AdminService);
 
+  //Carga las ponderaciones desde el backend.
   getPonderacionesResource = rxResource({
     loader: () => this.adminService.getPonderaciones()
   })

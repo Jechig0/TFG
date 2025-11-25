@@ -12,7 +12,7 @@ import { TablaNotasComponent } from "@/alumnos/components/tabla-notas/tabla-nota
   imports: [ListaAsignaturasComponent, FormsModule, SubirFicheroComponent, TablaNotasComponent],
   templateUrl: './alumno-nuevo-page.component.html',
 })
-export class AlumnoNuevoPageComponent { 
+export class AlumnoNuevoPageComponent {
 
   activatedRoute = inject(ActivatedRoute)
   alumnosService = inject(AlumnosService);
@@ -23,6 +23,7 @@ export class AlumnoNuevoPageComponent {
   // nuevaNota: number | null = null;
   alumnoId = this.activatedRoute.snapshot.paramMap.get('id');
 
+  // Carga las notas desde el backend al recibir los datos extraídos del PDF.
   cargarDesdeBackend(datos: AsignaturaNota[]) {
     const nuevos = datos.map(item => [item.asignatura, +item.nota] as [string, number]);
     this.alumnos.set(nuevos);

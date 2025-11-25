@@ -7,12 +7,14 @@ import { map, Observable, tap } from 'rxjs';
 export class AuthService {
 
   private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
+  // Comprueba si el usuario actual es un administrador.
   checkAdmin(): boolean {
     return sessionStorage.getItem('isAdmin') === 'true';
   }
 
+  // Intenta iniciar sesión con las credenciales proporcionadas.
   login(usuario: string, password: string): Observable<string> {
     const formData = new FormData();
     formData.append('user', usuario);

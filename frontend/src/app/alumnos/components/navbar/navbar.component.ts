@@ -16,17 +16,19 @@ export class NavbarComponent {
 
   mobileMenuOpen = signal<boolean>(false);
 
+  // Alterna el estado del menú móvil (abierto/cerrado).
   toggleMobileMenu(): void {
     this.mobileMenuOpen.set(!this.mobileMenuOpen());
   }
 
+  // Cierra el menú móvil.
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
   }
 
+  // Navega a la página del alumno.
   goToAlumnoPage(): void {
     const alumnoId = this.alumnoStateService.getId();
-    console.log("Navegando a la página del alumno con ID:", alumnoId);
     if (alumnoId != null){
       this.router.navigate([`alumno/${alumnoId}`]);
     }
@@ -35,6 +37,7 @@ export class NavbarComponent {
     }
   }
 
+  // Navega a la página de login de administradores.
   goToAdminLogin(): void {
     // ejemplo: ruta dedicada a login de administradores
     this.router.navigate(['/admin/login']);

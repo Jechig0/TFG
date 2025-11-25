@@ -118,10 +118,12 @@ export class AdminPageComponent {
   // Map con los valores en edición (mutable)
   editingMap = signal<Record<string, number>>({});
 
+  // Cambia la vista actual para elegir entre las distintas pestañas para cada consulta.
   setView(view: ViewType) {
     this.currentView.set(view);
   }
 
+  // Reinicia los clusters en el sistema.
   async resetClusters() {
     Swal.fire({
       title: 'Reiniciar Clusters',
@@ -148,7 +150,7 @@ export class AdminPageComponent {
     });
   }
 
-// Validar y enviar todo de una vez
+// Comprueba que las ponderaciones para la probabilidad de entradas son correctas y manda almacenarlas en el backend.
   guardarTodas() {
     const payload = this.editingMap();
     const años = Object.keys(payload);

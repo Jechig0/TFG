@@ -18,6 +18,7 @@ export class EnviarNumeroExpedienteComponent {
   alumnosService = inject(AlumnosService)
   alumnoStateService = inject(AlumnoStateService);
 
+  // Valida el código y DNI introducidos y redirige según corresponda.
   validarYRedirigir(codigo: string, dni: string) {
     const codigoLimpio = codigo.trim();
     const dniLimpio = dni.trim().toUpperCase();

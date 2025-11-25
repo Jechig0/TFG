@@ -20,32 +20,32 @@ services:
     ports:
       - "8000:8000"
     env_file: ./.env
-    depends_on:
-      - oracle # si usas oracle local
+    # depends_on:
+    #   - oracle # si usas oracle local
     restart: unless-stopped
     networks:
       - myapp-net
 
-  oracle:
-    image: gvenzl/oracle-free:23.3-slim-faststart   # <- imagen válida para Oracle 23 (gvenzl/oracle-free)
-    container_name: oracle-xe
-    ports:
-      - "1521:1521"
-    environment:
-      ORACLE_PASSWORD: examplePassword1
-      ORACLE_ALLOW_REMOTE: "true"
-    volumes:
-      - oracle-data:/opt/oracle/oradata
-    healthcheck:
-      test: ["CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/${ORACLE_PASSWORD}@localhost:1521/XEPDB1"]
-      interval: 30s
-      retries: 10
-    networks:
-      - myapp-net
+  # oracle:
+  #   image: gvenzl/oracle-free:23.3-slim-faststart   # <- imagen válida para Oracle 23 (gvenzl/oracle-free)
+  #   container_name: oracle-xe
+  #   ports:
+  #     - "1521:1521"
+  #   environment:
+  #     ORACLE_PASSWORD: examplePassword1
+  #     ORACLE_ALLOW_REMOTE: "true"
+  #   volumes:
+  #     - oracle-data:/opt/oracle/oradata
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/${ORACLE_PASSWORD}@localhost:1521/XEPDB1"]
+  #     interval: 30s
+  #     retries: 10
+  #   networks:
+  #     - myapp-net
 
 
-volumes:
-  oracle-data:
+# volumes:
+#   oracle-data:
 
 networks:
   myapp-net:

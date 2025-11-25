@@ -17,6 +17,7 @@ export class MainPageComponent implements OnInit {
     this.animarTexto();
   }
 
+  // Anima el texto de bienvenida en la página principal.
   animarTexto() {
     let i = 0;
     const intervalo = setInterval(() => {
@@ -29,6 +30,7 @@ export class MainPageComponent implements OnInit {
     }, 80); // velocidad de escritura
   }
 
+  // Redirige a la página de identificación del alumno.
   goToIdentificacion() {
     if(this.alumnoStateService.getId() != null){
       this.router.navigate([`alumno/${this.alumnoStateService.getId()}`]);

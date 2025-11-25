@@ -21,7 +21,8 @@ export class AdminLoginPageComponent {
     user: ['', [Validators.required]],
     password: ['', [Validators.required]],
   })
-  //TODO: Arreglar el HTML de login
+
+  //Comprueba si los datos son correctos y redirige a la página de admin.
   onSubmit(){
     if(this.loginForm.invalid){
       this.hasError.set(true)

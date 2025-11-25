@@ -30,10 +30,12 @@ export class AlumnoPageComponent {
     }
   })
 
+  //Redirige a la página de nuevo alumno para volver a subir el expediente.
   actualizarExpediente() {
     this.router.navigate([`/nuevo-alumno/${this.alumnoId}`]);
   }
 
+  //Elimina el expediente del alumno tras pedir confirmación.
   borrarExpediente() {
     Swal.fire({
       title: '¿Estás seguro?',
@@ -57,6 +59,8 @@ export class AlumnoPageComponent {
       }
     });
   }
+
+  // Cierra la sesión del usuario tras pedir confirmación.
   logout() {
     Swal.fire({
           title: 'Cerrar sesión',

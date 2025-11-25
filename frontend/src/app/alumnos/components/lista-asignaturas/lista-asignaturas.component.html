@@ -1,5 +1,5 @@
 <div class="p-4 bg-base-200 rounded-lg shadow-lg">
-  <!-- Search input -->
+  <!-- Barra de búsqueda -->
   <div class="mb-4">
     <label class="input input-bordered flex items-center gap-2 bg-neutral text-neutral-content">
       <i class="fa-solid fa-magnifying-glass"></i>
@@ -12,7 +12,7 @@
     </label>
   </div>
 
-  <!-- Selected subjects chips -->
+  <!-- Chips de asignaturas seleccionadas -->
   <div class="flex flex-wrap gap-2 mb-4">
     @for (subject of selectedAsignaturas(); track subject) {
       <div class="badge badge-primary gap-2">
@@ -24,7 +24,7 @@
     }
   </div>
 
-  <!-- Subjects dropdown -->
+  <!-- Lista de asignaturas -->
   @if(asignaturaResource.hasValue()){
     <ul class="menu bg-base-100 rounded-box shadow-lg max-h-60 overflow-auto mb-4">
       @for (asignaturas of asignaturaResource.value(); track $index) {
@@ -43,7 +43,7 @@
       }
     </ul>
   }
-  <!-- Predictions section -->
+  <!-- Predicciones -->
   <div class="grid gap-4">
     @if (selectedAsignaturas().length > 0) {
       @for (asignatura of selectedAsignaturas(); track asignatura) {

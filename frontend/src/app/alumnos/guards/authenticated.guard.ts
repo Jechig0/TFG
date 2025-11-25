@@ -3,7 +3,7 @@ import { CanMatchFn, Route, Router, UrlSegment, UrlTree } from "@angular/router"
 
 
 
-
+// Guardia que verifica si el usuario está autenticado antes de permitir el acceso a ciertas rutas.
 export const AuthenticatedGuard: CanMatchFn = (
   route: Route,
   segments: UrlSegment[]

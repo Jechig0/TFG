@@ -15,32 +15,18 @@ export class AlumnosService {
   private http = inject(HttpClient)
   alumnoStateService = inject(AlumnoStateService);
 
-  // alumnos = signal<Record<string, [string, number][]>>({});
-  // mediaAlumnos = signal<Record<string, string>>({});
-
-
+  // Obtiene las notas del alumno por su ID.
   getAlumnoById(id: string): Observable<[string, number][]> {
-  // const cache = this.alumnos();
-  // if (cache[id]) {
-  //   console.log('Cache hit for alumno:', id);
-  //   return of(cache[id]); // Devuelve lo cacheado
-  // }
-
-  return this.http.get<[string, number][]>(`${this.apiUrl}/alumno/${id}`).pipe(
-    map((data) => {
-      const resultado = data.map(([asignatura, nota]) => [asignatura, +nota] as [string, number]);
-      // this.alumnos.update(prev => ({ ...prev, [id]: resultado }));
+    return this.http.get<[string, number][]>(`${this.apiUrl}/alumno/${id}`).pipe(
+      map((data) => {
+        const resultado = data.map(([asignatura, nota]) => [asignatura, +nota] as [string, number]);
       return resultado;
     })
     );
   }
 
+  // Obtiene la media del alumno por su ID.
   getMediaAlumno(id: string): Observable<string>{
-  //   const cache = this.mediaAlumnos();
-  //   if (cache[id]) {
-  //     console.log('Cache hit for mediaAlumno:', id);
-  //     return of(cache[id]);
-  // }
     return this.http.get<string>(`${this.apiUrl}/alumno/${id}/media/`).pipe(
       map((media) => {
       // this.mediaAlumnos.update(prev => ({ ...prev, [id]: media }));
@@ -49,6 +35,7 @@ export class AlumnosService {
   );
   }
 
+  // Verifica si el alumno existe en el sistema con el ID y DNI proporcionados.
   verificarAlumno(id: string, dni:string): Observable<string>{
     return this.http.post<{estado: string}>(`${this.apiUrl}/alumno/verificar`, {
       id_alumno: id.trim(),
@@ -60,20 +47,24 @@ export class AlumnosService {
 
   }
 
+  // Obtiene las asignaturas del alumno por su ID.
   getAsignaturas(id: string): Observable<string[][]>{
     return this.http.get<string[][]>(`${this.apiUrl}/asignatura/${id}`);
   }
 
+  // Obtiene la probabilidad de acceso del alumno a una asignatura.
   getProbabilidadAcceso(id:string, asignatura: string): Observable<number>{
     asignatura = asignatura.replace(/\s+/g, '')
     return this.http.get<number>(`${this.apiUrl}/alumno/probabilidadEntrada/${id}/${asignatura}`)
   }
 
+  // Obtiene la afinidad del alumno con una asignatura.
   getAfinidadAsignatura(id:string, asignatura: string): Observable<number>{
     asignatura = asignatura.replace(/\s+/g, '')
     return this.http.get<number>(`${this.apiUrl}/alumno/afinidad/${id}/${asignatura}`)
   }
 
+  //Envía el informe PDF del expediente acafémico del alumno al backend para su procesamiento.
   enviarInformePdf(id: string, dni: string, file: File): Observable<AsignaturaNota[]> {
     const formData = new FormData();
     formData.append('file', file);
@@ -82,6 +73,7 @@ export class AlumnosService {
     return this.http.post<AsignaturaNota[]>(`${this.apiUrl}/alumno/${id}/subir-informe`, formData);
 }
 
+  // Elimina el expediente del alumno por su ID.
   eliminarAlumno(id:string): Observable<{estado: string}> {
     this.alumnoStateService.clear();
     return this.http.delete<{estado: string}>(`${this.apiUrl}/alumno/delete/${id}`);

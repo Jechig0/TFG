@@ -27,6 +27,8 @@ export class SubirFicheroComponent {
 
   dni = this.alumnoStateService.getDni();
 
+  // Maneja la selección de un fichero, enviándolo al backend para su procesamiento.
+  // Y redirigiendo según el resultado.
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {

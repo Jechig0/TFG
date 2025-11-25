@@ -76,14 +76,11 @@ def calcular_probabilidad_entrada(cur, nombre_asignatura, codigo_alumno):
     #pero por no querer añadirlo como valor fijo en la base de datos, lo comento.
     # if media >=4:
     #     return 1
-    print(media)
     # Obtener las notas de corte por año
     notas_corte = calcular_nota_corte(cur, nombre_asignatura)
     if not notas_corte or len(notas_corte) == 0:
         raise HTTPException(status_code=400, detail=f"No hay datos históricos para la asignatura {nombre_asignatura}")
-    
-    print(notas_corte)
-    
+        
     probabilidad = 0.0
     for curso_acad, nota_corte in notas_corte.items():
         
@@ -179,7 +176,7 @@ def obtener_vector_alumno(
 
     return alumno_row
 
- 
+#Transforma el DataFrame en una matriz alumno-asignatura y entrena el modelo de clustering KMeans. 
 def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     # Crear matriz alumno-asignatura
     df['NUM_CALIFICACIÓN'] = pd.to_numeric(df['NUM_CALIFICACIÓN'], errors='coerce')
@@ -197,6 +194,9 @@ def entrenar_clustering(df:pd.DataFrame, n_clusters=12):
     
     return modelo, scaler, matriz, df_clusters
 
+#Inserta la fila del alumno en la matriz base y lo coloca en un clúster. Dentro de ese clúster, calcula la afinidad del alumno a la asignatura enviada.
+#La afinidad actualmente se calcula mediante la fórmula: 0.45 * nota media del clúster en la asignatura + 0.1 * porcentaje de alumnos del clúster matriculados
+# + 0.45 * porcentaje de alumnos del clúster aprobados.
 def predecir_afinidad_cluster(
     alumno_id: str,
     asignatura: str,
@@ -205,7 +205,7 @@ def predecir_afinidad_cluster(
     matriz_base: pd.DataFrame,
     df_clusters: pd.DataFrame,
     df_original: pd.DataFrame,
-    alumno_row: pd.DataFrame | None = None,
+    alumno_row: pd.DataFrame
 ) -> float | None:
     """
     Calcula la afinidad como combinación de:
@@ -263,8 +263,6 @@ def predecir_afinidad_cluster(
     porcentaje_matriculados = alumnos_matriculados / total_alumnos_cluster if total_alumnos_cluster > 0 else 0.0
     porcentaje_aprobados = alumnos_aprobados / alumnos_matriculados if alumnos_matriculados > 0 else 0.0
     
-    #print(f"[DEBUG] {asignatura=} {cluster_id=} {total_alumnos_cluster=} {alumnos_matriculados=} {porcentaje_matriculados=:.3f} {nota_media_norm=:.3f} {alumnos_aprobados=} {porcentaje_aprobados=:.3f}")
-
     # --- Afinidad combinada
     afinidad = 0.45 * nota_media_norm + 0.1 * porcentaje_matriculados + 0.45 * porcentaje_aprobados
 
@@ -291,7 +289,8 @@ def extraer_tablas(pdf_path):
     return tables, lineas_extraidas[1], lineas_extraidas[4]
 
 # Rellena las asignaturas en una tabla, reemplazando None o valores vacíos por el último valor no vacío encontrado en la columna.
-#Al leer del PDF, si hay más de una entrada para una asignatura, solo pone el nombre en la primera calificación, así que la pongo también en el resto.
+# En el formato actual del documento, el nombre de la asignatura aparece solo en la primera calificación.
+# Por tanto, si encuentra nulo (sigue siendo la misma asignatura), rellena con la última asignatura válida.
 def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
     "Reemplaza valores None o vacíos por el último valor no vacío encontrado en una columna."
     asignatura = ultima_asignatura
@@ -316,10 +315,12 @@ def rellenar_asignaturas(tabla, indice_columna=0, ultima_asignatura=None):
     return nueva_tabla, asignatura
 
 # Limpia una tabla eliminando filas basura y rellenando asignaturas.
+# Borra todo el contenido anterior a las calificaciones, que empiezan en la frase objetivo.
+# Y llama a la función de rellenar asignaturas.
 def limpiar_tabla(tabla, ultima_asignatura=None ,frase_objetivo="DATOS RELATIVOS A LAS ACTIVIDADES FORMATIVAS REALIZADAS EN EL CENTRO:"):
     tabla_limpia = []
 
-    # Paso 1: eliminar filas basura
+    # Paso 1: eliminar filas basura (todas las anteriores a la frase objetivo, que es donde empiezan las calificaciones)
     for fila in tabla:
         if fila[0] == frase_objetivo and all(c in [None, '', ' '] for c in fila[1:]):
             continue
@@ -362,7 +363,6 @@ def limpiar_tablas_finales(tablas):
     return tablas_limpias
 
 #Ejecuta todas las funciones anteriores de lectura y limpieza del PDF, controlando también que los datos enviados son correctos.
-#TODO: En el frontend, el DNI se va a almacenar com SHA-256, por lo que hay que ver como adaptar bien el código.
 def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
     if not id or not dni:
         raise HTTPException(status_code=400, detail="ID y DNI son obligatorios")
@@ -396,7 +396,7 @@ def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
     tablas_finales = limpiar_tablas_finales(tablas_procesadas)
     return tablas_finales
 
-
+#Almacena el número de expediente y el hash del DNI en la tabla ALUMNOS_VERIFICADOS.
 def guardar_alumno_verificado(conn:oracledb.Connection, id_alumno: str, dni: str):
     # Crear hash del DNI en mayúsculas y sin espacios
 
@@ -414,6 +414,7 @@ def guardar_alumno_verificado(conn:oracledb.Connection, id_alumno: str, dni: str
     conn.commit()
     return True
 
+#Comprueba si el alumno que intenta usar el sistema está ya verificado, es decir, si es un nuevo alumno o no.
 def existe_alumno(conn:oracledb.Connection, id_alumno:str, dni:str) -> bool:
     cur = conn.cursor()
     cur.execute("""
@@ -425,7 +426,7 @@ def existe_alumno(conn:oracledb.Connection, id_alumno:str, dni:str) -> bool:
 
     return cur.fetchone()
     
-    
+#Comprueba que el alumno que intenta usar el sistema está verificado y sus credenciales son correctas.    
 def verificar_alumno(conn:oracledb.Connection, id_alumno: str, dni: str) -> bool:
     print(f"[DEBUG] Verificando alumno {id_alumno} con DNI hash {dni.strip()}")
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
@@ -440,13 +441,26 @@ def verificar_alumno(conn:oracledb.Connection, id_alumno: str, dni: str) -> bool
 
     return cur.fetchone() is not None
 
-
+#Elimina los espacios en blanco del nombre de una asignatura para normalizarla.
+#Por ejemplo, "Visión por Computador" -> "VisiónporComputador"
+#Esto es necesario ya que los nombres de asignaturas, para enviarlos por URL desde el frontend, no pueden tener espacios.
 def normalizar_asignatura(nombre) -> str:
     if not isinstance(nombre, str) or not nombre.strip():
         return ""
     return nombre.replace(" ", "").strip()
 
+#Cálculo de la media ponderada de los estudiantes en la tabla informes_alumno
+#Se sigue el método de la UMA: (media de notas * créditos aprobados) / (créditos totales de la titulación)
 def calcular_media_ponderada_alumno(cur: oracledb.Cursor, codigo_alumno: str):
+    titulacion_id = codigo_alumno[:4]
+    cur.execute("""
+        SELECT CREDITOS
+        FROM V_TITULACION
+        WHERE CODIGO = :titulacion_id   
+        """, titulacion_id=titulacion_id)
+    creditos_totales = cur.fetchone()[0]
+    if creditos_totales is None or creditos_totales == 0:
+        return (None, 0)  # Evitamos división por cero o falta de datos
     cur.execute("""
         SELECT 
             AVG(TO_NUMBER(NUM_CALIFICACIÓN)) AS media_aprobadas,
@@ -461,9 +475,10 @@ def calcular_media_ponderada_alumno(cur: oracledb.Cursor, codigo_alumno: str):
     media, aprobadas, creditos = resultado
     if media is None or aprobadas == 0:
         return (None, 0)  # Evitamos división por cero o falta de datos
-    ponderada = (media * creditos) / 240
+    ponderada = (media * creditos) / creditos_totales
     return (round(ponderada, 2), aprobadas) #CAMBIO: Devuelvo también la cantidad de aprobadas
 
+#Comprueba que el expediente académico subido es un PDF válido y con el nombre correcto.
 def validar_pdf(file: File):
     if file.filename != 'ListadoConsultaExpedienteAcademico.pdf':
         raise HTTPException(
@@ -476,6 +491,8 @@ def validar_pdf(file: File):
     
     return True
 
+#Guarda las calificaciones del expediente académico del alumno en la tabla informes_alumno.
+#En caso de estar modificandolo, solo cambia las filas que han cambiado o son nuevas.
 def insertar_informe_alumno(conn: oracledb.Connection, codigoalum: str, tablas_finales: list):
     cur = conn.cursor()
     for tabla in tablas_finales:
@@ -523,6 +540,7 @@ def insertar_informe_alumno(conn: oracledb.Connection, codigoalum: str, tablas_f
     cur.close()
     return True
 
+#Devuelve el expediente académico de un alumno de la tabla informes_alumno.
 def obtener_informe_alumno(conn, id):
     cur = conn.cursor()
     cur.execute("""
@@ -553,6 +571,7 @@ def obtener_informe_alumno(conn, id):
     
     return resultado
 
+#Elimina un expediente académico de un alumno de la tabla informes_alumno.
 def borrar_informe_alumno(conn: oracledb.Connection, id: str):
     cur = conn.cursor()
     cur.execute("""
@@ -561,7 +580,8 @@ def borrar_informe_alumno(conn: oracledb.Connection, id: str):
     """, codigo=id)
     conn.commit()
     cur.close()
-    
+
+#Elimina un alumno verificado de la tabla ALUMNOS_VERIFICADOS.    
 def borrar_alumno_verificado(conn:oracledb.Connection, id: str):
     cur = conn.cursor()
     cur.execute("""
@@ -571,6 +591,7 @@ def borrar_alumno_verificado(conn:oracledb.Connection, id: str):
     conn.commit()
     cur.close()
 
+#Devuelve las optativas ofertadas para una titulación concreta.
 def obtener_optativas_por_titulacion(id: str, conn: oracledb.Connection):
     titulacion_id = id[:4]
     cur = conn.cursor()
@@ -590,6 +611,7 @@ def obtener_optativas_por_titulacion(id: str, conn: oracledb.Connection):
     
     return asignaturas
 
+#Comprueba si el usuario y la contraseña del administrador son correctos.
 def check_admin(conn: oracledb.Connection, user: str, password: str):
     cur = conn.cursor()
     cur.execute("""
@@ -601,6 +623,7 @@ def check_admin(conn: oracledb.Connection, user: str, password: str):
     
     return resultado
 
+#Devuelve el número de consultas realizadas ordenadas por titulación.
 def numero_consultas_titulaciones(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute("""
@@ -617,6 +640,7 @@ def numero_consultas_titulaciones(conn: oracledb.Connection):
     
     return titulaciones
 
+#Devuelve el número de consultas realizadas ordenadas por asignatura.
 def asignaturas_populares(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute("""
@@ -633,6 +657,7 @@ def asignaturas_populares(conn: oracledb.Connection):
     
     return asignaturas
 
+#Devuelve la media de la afinidad obtenida por todos los alumnos que han consultado en cada asignatura.
 def asignaturas_afinidad(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute("""
@@ -650,6 +675,7 @@ def asignaturas_afinidad(conn: oracledb.Connection):
     return asignaturas
     
 
+#Devuelve la media de la probabilidad de entrada obtenida por todos los alumnos que han consultado en cada asignatura.
 def asignaturas_probabilidad(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute("""
@@ -666,6 +692,7 @@ def asignaturas_probabilidad(conn: oracledb.Connection):
     
     return asignaturas
 
+#Almacena la afinidad calculada para un alumno y una asignatura en la tabla ADMIN_INFO.
 def insertar_afinidad_alumno(conn: oracledb.Connection, alumno_id: str, asignatura: str, afinidad: float):
     titulacion = alumno_id[:4]  # Asumiendo que los primeros 4 caracteres son la titulación
     cur = conn.cursor()
@@ -684,6 +711,8 @@ def insertar_afinidad_alumno(conn: oracledb.Connection, alumno_id: str, asignatu
     
     return True
 
+#Almacena la probabilidad de entrada calculada para un alumno y una asignatura en la tabla ADMIN_INFO.
+#Estos dos valores suelen tardar tiempos distintos en calcularse, por lo que se insertan por separado.
 def insertar_probabilidad_alumno(conn: oracledb.Connection, alumno_id: str, asignatura: str, probabilidad: float):
     titulacion = alumno_id[:4]  # Asumiendo que los primeros 4 caracteres son la titulación
     cur = conn.cursor()
@@ -703,6 +732,7 @@ def insertar_probabilidad_alumno(conn: oracledb.Connection, alumno_id: str, asig
     
     return True
 
+
 def borrar_consultas(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute(""" 
@@ -713,8 +743,13 @@ def borrar_consultas(conn: oracledb.Connection):
     
     return True
 
+#Borra un expediente académico completo de la base de datos, tanto de la tabla ALUMNOS_VERIFICADOS como de INFORMES_ALUMNO.
 def borrar_expedientes(conn: oracledb.Connection):
     cur = conn.cursor()
+    cur.execute(""" 
+                DELETE FROM ALUMNOS_VERIFICADOS
+                """)
+    conn.commit()
     cur.execute(""" 
                 DELETE FROM INFORMES_ALUMNO
                 """)
@@ -723,6 +758,7 @@ def borrar_expedientes(conn: oracledb.Connection):
     
     return True
 
+#Dada una asignatura normalizada (sin espacios), devuelve su nombre original.
 def obtener_asignatura_sin_normalizar(conn: oracledb.Connection, asignatura: str):
     cur = conn.cursor()
     cur.execute(""" 
@@ -738,6 +774,7 @@ def obtener_asignatura_sin_normalizar(conn: oracledb.Connection, asignatura: str
 
     return asignatura
 
+#Reentrena los clusters y actualiza las variables globales de la aplicación.
 def reiniciar_clusters(conn: oracledb.Connection, request:Request):
     app = request.app
     df = crear_df(conn)
@@ -756,6 +793,7 @@ def reiniciar_clusters(conn: oracledb.Connection, request:Request):
 
     return True
 
+#Devuelve el peso de cada curso académico para el cálculo de la probabilidad de entrada.
 def get_ponderaciones(conn: oracledb.Connection):
     cur = conn.cursor()
     cur.execute("""
@@ -771,7 +809,7 @@ def get_ponderaciones(conn: oracledb.Connection):
     
     return ponderaciones
 
-
+#Actualiza los pesos de cada curso académico para el cálculo de la probabilidad de entrada.
 def set_ponderaciones(conn: oracledb.Connection, ponderaciones: list):
     cur = conn.cursor()
     for valor in ponderaciones:

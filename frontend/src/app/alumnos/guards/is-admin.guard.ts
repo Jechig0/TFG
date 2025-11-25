@@ -3,7 +3,7 @@ import { CanMatchFn, Route, Router, UrlSegment, UrlTree } from "@angular/router"
 
 
 
-
+// Guardia que verifica si el usuario es administrador antes de permitir el acceso a ciertas rutas.
 export const isAdminGuard: CanMatchFn = (
   route: Route,
   segments: UrlSegment[]
