@@ -1,4 +1,4 @@
-Manual deInstalación
+Manual de Instalación
 
 
 Requisitos del Sistema
