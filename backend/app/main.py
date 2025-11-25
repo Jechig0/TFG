@@ -12,7 +12,6 @@ from app.routers.admin import adminRouter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("⏳ Creando pool de conexiones...")
     dsn = oracledb.makedsn("afrodita.lcc.uma.es", 1521, sid="APOLO")
     # Crear un pool de conexiones para mejorar el rendimiento y poder atender múltiples peticiones simultáneamente
     pool = oracledb.create_pool(
@@ -42,12 +41,8 @@ async def lifespan(app: FastAPI):
         app.state.scaler = scaler
         app.state.matriz = matriz
         app.state.df_clusters = df_clusters
-
-    print("✅ Pool creado correctamente")
     yield  # Espera a que la app corra
-    print("🧹 Cerrando pool de conexiones...")
     pool.close()
-    print("✅ Pool cerrado correctamente")
 
 #Inicialización de la aplicación FastAPI
 app = FastAPI(

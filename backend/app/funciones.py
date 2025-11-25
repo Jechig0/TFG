@@ -369,10 +369,7 @@ def procesar_pdf(conn: oracledb.Connection, pdf_path: str, id: str, dni: str):
 
     tablas, dni_pdf, id_pdf = extraer_tablas(pdf_path)
     dni_pdf = dni_pdf[14:].strip()
-    print(f"[DEBUG] ID extraído del PDF: {dni_pdf}")
     dni_pdf = hashlib.sha256(dni_pdf.strip().upper().encode()).hexdigest()
-    print(f"[DEBUG] DNI extraído del PDF (hash): {dni_pdf}")
-    print(f"[DEBUG] DNI enviado desde frontend (hash): {dni.strip()}")
     id_pdf = id_pdf[14:].strip()
 
     # Comparar con lo que vino del frontend
@@ -428,7 +425,6 @@ def existe_alumno(conn:oracledb.Connection, id_alumno:str, dni:str) -> bool:
     
 #Comprueba que el alumno que intenta usar el sistema está verificado y sus credenciales son correctas.    
 def verificar_alumno(conn:oracledb.Connection, id_alumno: str, dni: str) -> bool:
-    print(f"[DEBUG] Verificando alumno {id_alumno} con DNI hash {dni.strip()}")
     dni_hash = hashlib.sha256(dni.strip().upper().encode()).hexdigest()
     
     cur = conn.cursor()
